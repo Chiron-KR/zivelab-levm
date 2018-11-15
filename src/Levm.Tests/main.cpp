@@ -6,8 +6,11 @@
 
 #include "lib\levmar.h"
 
-// 1. Rosenbrock function, global minimum at (1, 1)
+//
+// 1. Rosenbrock
+//
 #define ROSD 105.0
+double rosenbrock_p[2] = { 1.0, 1.0 }; // best parameters
 void rosenbrock(double *p, double *x, int m, int n, void *data)
 {
 	register int i;
@@ -24,8 +27,11 @@ void rosenbrockprime(double *p, double *jac, int m, int n, void *data)
 	}
 }
 
-// 2. Norris - Best Estimates: p[0] = -0.262323073774029, p[1] = 1.00211681802045
+//
+// 2. Norris
 // https://www.itl.nist.gov/div898/strd/lls/data/Norris.shtml
+//
+double norris_p[2] = { -0.262323073774029, 1.00211681802045 }; // best parameters
 double norris_y[36] = {
 	0.1,	338.8,	118.1,	888,	9.2,	228.1,	668.5,	998.5,	449.1,	778.9,	
 	559.2,	0.3,	0.1,	778.1,	668.8,	339.3,	448.9,	10.8,	557.7,	228.3,	
@@ -54,8 +60,11 @@ void norrisprime(double *p, double *jac, int m, int n, void *data)
 	}
 }
 
-// 3. Lanczos1 - best paramaters = { 0.0951, 1.0, 0.8607, 3, 1.5576, 5 }
+//
+// 3. Lanczos1
 // https://www.itl.nist.gov/div898/strd/nls/data/lanczos1.shtml
+//
+double lanczos1_p[6] = { 0.0951, 1.0, 0.8607, 3, 1.5576, 5 }; // best parameters
 double lanczos1_y[24] = {
 	2.513400000000,	2.044333373291,	1.668404436564,	1.366418021208,	1.123232487372,
 	0.926889718004,	0.767933856373,	0.638877552311,	0.533783531740,	0.447936361735,
@@ -82,9 +91,13 @@ void lanczos1(double *p, double *y, int m, int n, void *data)
 	}
 }
 
-// 4. Thurber 
-// Best paramaters = { 1288.139680000000, 1491.079253500000, 583.238368770000, 75.416644291000, 0.966295028640, 0.397972857970, 0.049727297349}
+//
+// 4. Thurber
 // https://www.itl.nist.gov/div898/strd/nls/data/thurber.shtml
+//
+double thurber_p[7] = {
+    1288.139680000000, 1491.079253500000, 583.238368770000, 75.416644291000, 0.966295028640,
+    0.397972857970, 0.049727297349 }; // best parameters
 double thurber_y[37] = {
 	 80.574,	084.248,	087.264,	087.195,	089.076,	
 	 089.608,	089.868,	090.101,	092.405,	095.854,
@@ -146,7 +159,10 @@ int main()
 	printf("Results for Rosenberg\n");
 	printf("Levenberg-Marquardt returned %d in %g iter, reason %g\nSolution: ", ret, info[5], info[6]);
 	for (i = 0; i < m; ++i)
-		printf("%.7g ", p[i]);
+		printf("%12.7g ", p[i]);
+    printf("\nExpected: ");
+    for (i = 0; i < m; ++i)
+        printf("%12.7g ", rosenbrock_p[i]);
 	printf("\n\nMinimization info:\n");
 	for (i = 0; i < LM_INFO_SZ; ++i)
 		printf("%g ", info[i]);
@@ -165,7 +181,10 @@ int main()
 	printf("Results for Norris\n");
 	printf("Levenberg-Marquardt returned %d in %g iter, reason %g\nSolution: ", ret, info[5], info[6]);
 	for (i = 0; i < m; ++i)
-		printf("%.7g ", p[i]); 
+		printf("%12.7g ", p[i]);
+    printf("\nExpected: ");
+    for (i = 0; i < m; ++i)
+        printf("%12.7g ", norris_p[i]);
 	printf("\n\nMinimization info:\n");
 	for (i = 0; i < LM_INFO_SZ; ++i)
 		printf("%g ", info[i]);
@@ -184,7 +203,10 @@ int main()
 	printf("Results for Lanczos1\n");
 	printf("Levenberg-Marquardt returned %d in %g iter, reason %g\nSolution: ", ret, info[5], info[6]);
 	for (i = 0; i < m; ++i)
-		printf("%.7g ", p[i]);
+		printf("%12.7g ", p[i]);
+    printf("\nExpected: ");
+    for (i = 0; i < m; ++i)
+        printf("%12.7g ", lanczos1_p[i]);
 	printf("\n\nMinimization info:\n");
 	for (i = 0; i < LM_INFO_SZ; ++i)
 		printf("%g ", info[i]);
@@ -203,7 +225,10 @@ int main()
 	printf("Results for Thurber\n");
 	printf("Levenberg-Marquardt returned %d in %g iter, reason %g\nSolution: ", ret, info[5], info[6]);
 	for (i = 0; i < m; ++i)
-		printf("%.7g ", p[i]);
+		printf("%12.7g ", p[i]);
+    printf("\nExpected: ");
+    for (i = 0; i < m; ++i)
+        printf("%12.7g ", thurber_p[i]);
 	printf("\n\nMinimization info:\n");
 	for (i = 0; i < LM_INFO_SZ; ++i)
 		printf("%g ", info[i]);

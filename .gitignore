@@ -35,6 +35,7 @@ bin/
 obj/
 out/
 debug/
+release/
 
 # User-specific Files
 *.user
