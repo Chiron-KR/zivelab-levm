@@ -177,7 +177,7 @@ void rat43(double *p, double *y, int m, int n, void *data)
 
 // Model Expression = Rs-Rct|Cdl
 // Z = Rs + 1/(1/Rct + Cdl*s)
-// Parameters = { Rs, rct, Cdl }
+// Parameters = { Rs, Rct, Cdl }
 // dZ/dRs = 1
 // dZ/dRct = 1 / (Rct ^ 2 * (1 / Rct + Cdl * s) ^ 2)
 // dZ/dCdl = -s / (1 / Rct + Cdl * s) ^ 2
@@ -354,6 +354,202 @@ void randleprime(double *p, double *jac, int m, int n, void *data)
 
 #pragma endregion
 
+#pragma region Define Custom1 - L-Rs-Rp|Q
+
+// Model Expression = L-Rs-Rp|Q
+// Z = Rs + L*s + 1/(1/Rp + Qy*s^Qa)
+// Parameters = { L, Rs, Rp, Qy, Qa }
+// dZ/dL = s
+// dZ/dRs = 1
+// dZ/dRp = 1/(Rp^2*(1/Rp + Qy*s^Qa)^2)
+// dZ/dQy = -s^Qa/(1/Rp + Qy*s^Qa)^2
+// dZ/dQa = -(Qy*s^Qa*ln(s))/(1/Rp + Qy*s^Qa)^2
+
+double custom1_p[5] = {
+    1e-6,    0.1,    0.1,   2,  0.8
+}; // best parameters
+double custom1_z1[181] = {
+    1.000006E-1,	1.000006E-1,	1.000007E-1,	1.000007E-1,	1.000008E-1,
+    1.000009E-1,	1.000010E-1,	1.000011E-1,	1.000012E-1,	1.000013E-1,
+    1.000014E-1,	1.000016E-1,	1.000017E-1,	1.000019E-1,	1.000020E-1,
+    1.000022E-1,	1.000025E-1,	1.000027E-1,	1.000030E-1,	1.000032E-1,
+    1.000036E-1,	1.000039E-1,	1.000043E-1,	1.000047E-1,	1.000051E-1,
+    1.000056E-1,	1.000062E-1,	1.000068E-1,	1.000074E-1,	1.000081E-1,
+    1.000089E-1,	1.000098E-1,	1.000107E-1,	1.000118E-1,	1.000129E-1,
+    1.000142E-1,	1.000155E-1,	1.000170E-1,	1.000187E-1,	1.000205E-1,
+    1.000225E-1,	1.000246E-1,	1.000270E-1,	1.000296E-1,	1.000325E-1,
+    1.000356E-1,	1.000391E-1,	1.000429E-1,	1.000470E-1,	1.000516E-1,
+    1.000566E-1,	1.000620E-1,	1.000681E-1,	1.000747E-1,	1.000819E-1,
+    1.000899E-1,	1.000986E-1,	1.001082E-1,	1.001188E-1,	1.001303E-1,
+    1.001431E-1,	1.001571E-1,	1.001724E-1,	1.001893E-1,	1.002079E-1,
+    1.002283E-1,	1.002508E-1,	1.002755E-1,	1.003027E-1,	1.003327E-1,
+    1.003657E-1,	1.004021E-1,	1.004422E-1,	1.004865E-1,	1.005353E-1,
+    1.005892E-1,	1.006488E-1,	1.007147E-1,	1.007875E-1,	1.008682E-1,
+    1.009575E-1,	1.010566E-1,	1.011666E-1,	1.012887E-1,	1.014244E-1,
+    1.015754E-1,	1.017435E-1,	1.019309E-1,	1.021401E-1,	1.023736E-1,
+    1.026347E-1,	1.029269E-1,	1.032541E-1,	1.036208E-1,	1.040321E-1,
+    1.044938E-1,	1.050122E-1,	1.055945E-1,	1.062486E-1,	1.069834E-1,
+    1.078084E-1,	1.087341E-1,	1.097717E-1,	1.109330E-1,	1.122300E-1,
+    1.136753E-1,	1.152807E-1,	1.170577E-1,	1.190161E-1,	1.211637E-1,
+    1.235054E-1,	1.260421E-1,	1.287705E-1,	1.316819E-1,	1.347618E-1,
+    1.379898E-1,	1.413401E-1,	1.447815E-1,	1.482792E-1,	1.517956E-1,
+    1.552925E-1,	1.587323E-1,	1.620803E-1,	1.653055E-1,	1.683819E-1,
+    1.712895E-1,	1.740139E-1,	1.765466E-1,	1.788840E-1,	1.810275E-1,
+    1.829820E-1,	1.847552E-1,	1.863572E-1,	1.877991E-1,	1.890932E-1,
+    1.902516E-1,	1.912867E-1,	1.922102E-1,	1.930332E-1,	1.937661E-1,
+    1.944187E-1,	1.949995E-1,	1.955166E-1,	1.959772E-1,	1.963875E-1,
+    1.967533E-1,	1.970797E-1,	1.973711E-1,	1.976316E-1,	1.978646E-1,
+    1.980733E-1,	1.982603E-1,	1.984280E-1,	1.985787E-1,	1.987141E-1,
+    1.988359E-1,	1.989456E-1,	1.990445E-1,	1.991336E-1,	1.992141E-1,
+    1.992868E-1,	1.993525E-1,	1.994120E-1,	1.994658E-1,	1.995145E-1,
+    1.995587E-1,	1.995987E-1,	1.996350E-1,	1.996680E-1,	1.996979E-1,
+    1.997250E-1,	1.997497E-1,	1.997721E-1,	1.997925E-1,	1.998111E-1,
+    1.998279E-1,	1.998433E-1,	1.998572E-1,	1.998699E-1,	1.998815E-1,
+    1.998920E-1
+}; // real part of the observed data
+double custom1_z2[181] = {
+    6.283184E+0,	5.599893E+0,	4.990909E+0,	4.448152E+0,	3.964419E+0,
+    3.533292E+0,	3.149049E+0,	2.806592E+0,	2.501378E+0,	2.229354E+0,
+    1.986913E+0,	1.770837E+0,	1.578260E+0,	1.406624E+0,	1.253654E+0,
+    1.117319E+0,	9.958102E-1,	8.875152E-1,	7.909971E-1,	7.049750E-1,
+    6.283076E-1,	5.599775E-1,	4.990780E-1,	4.448010E-1,	3.964264E-1,
+    3.533122E-1,	3.148862E-1,	2.806388E-1,	2.501153E-1,	2.229108E-1,
+    1.986643E-1,	1.770541E-1,	1.577935E-1,	1.406268E-1,	1.253264E-1,
+    1.116891E-1,	9.953408E-2,	8.870005E-2,	7.904327E-2,	7.043563E-2,
+    6.276292E-2,	5.592337E-2,	4.982624E-2,	4.439068E-2,	3.954460E-2,
+    3.522372E-2,	3.137077E-2,	2.793466E-2,	2.486986E-2,	2.213575E-2,
+    1.969614E-2,	1.751871E-2,	1.557466E-2,	1.383827E-2,	1.228661E-2,
+    1.089919E-2,	9.657723E-3,	8.545856E-3,	7.548980E-3,	6.654022E-3,
+    5.849278E-3,	5.124256E-3,	4.469542E-3,	3.876675E-3,	3.338036E-3,
+    2.846752E-3,	2.396605E-3,	1.981953E-3,	1.597659E-3,	1.239026E-3,
+    9.017381E-4,	5.818070E-4,	2.755262E-4,	-2.057413E-5,	-3.097671E-4,
+    -5.951649E-4,	-8.797530E-4,	-1.166420E-3,	-1.457987E-3,	-1.757232E-3,
+    -2.066917E-3,	-2.389805E-3,	-2.728684E-3,	-3.086382E-3,	-3.465784E-3,
+    -3.869844E-3,	-4.301592E-3,	-4.764143E-3,	-5.260695E-3,	-5.794529E-3,
+    -6.368991E-3,	-6.987479E-3,	-7.653410E-3,	-8.370181E-3,	-9.141111E-3,
+    -9.969366E-3,	-1.085787E-2,	-1.180918E-2,	-1.282534E-2,	-1.390773E-2,
+    -1.505682E-2,	-1.627195E-2,	-1.755109E-2,	-1.889046E-2,	-2.028431E-2,
+    -2.172455E-2,	-2.320043E-2,	-2.469837E-2,	-2.620173E-2,	-2.769081E-2,
+    -2.914302E-2,	-3.053323E-2,	-3.183441E-2,	-3.301854E-2,	-3.405777E-2,
+    -3.492573E-2,	-3.559903E-2,	-3.605862E-2,	-3.629105E-2,	-3.628940E-2,
+    -3.605377E-2,	-3.559124E-2,	-3.491540E-2,	-3.404544E-2,	-3.300486E-2,
+    -3.182010E-2,	-3.051905E-2,	-2.912975E-2,	-2.767924E-2,	-2.619262E-2,
+    -2.469248E-2,	-2.319850E-2,	-2.172729E-2,	-2.029244E-2,	-1.890467E-2,
+    -1.757210E-2,	-1.630053E-2,	-1.509374E-2,	-1.395385E-2,	-1.288159E-2,
+    -1.187658E-2,	-1.093756E-2,	-1.006261E-2,	-9.249328E-3,	-8.494969E-3,
+    -7.796565E-3,	-7.151023E-3,	-6.555204E-3,	-6.005977E-3,	-5.500269E-3,
+    -5.035095E-3,	-4.607585E-3,	-4.214997E-3,	-3.854730E-3,	-3.524327E-3,
+    -3.221483E-3,	-2.944034E-3,	-2.689964E-3,	-2.457395E-3,	-2.244583E-3,
+    -2.049912E-3,	-1.871886E-3,	-1.709123E-3,	-1.560351E-3,	-1.424394E-3,
+    -1.300172E-3,	-1.186691E-3,	-1.083040E-3,	-9.883783E-4,	-9.019385E-4,
+    -8.230152E-4,	-7.509621E-4,	-6.851874E-4,	-6.251491E-4,	-5.703511E-4,
+    -5.203395E-4,	-4.746991E-4,	-4.330503E-4,	-3.950460E-4,	-3.603688E-4,
+    -3.287289E-4
+}; // imaginary part of the observed data
+double custom1_f[181] = {
+    1.000000E+6,	8.912509E+5,	7.943282E+5,	7.079458E+5,	6.309573E+5,
+    5.623413E+5,	5.011872E+5,	4.466836E+5,	3.981072E+5,	3.548134E+5,
+    3.162278E+5,	2.818383E+5,	2.511886E+5,	2.238721E+5,	1.995262E+5,
+    1.778279E+5,	1.584893E+5,	1.412538E+5,	1.258925E+5,	1.122018E+5,
+    1.000000E+5,	8.912509E+4,	7.943282E+4,	7.079458E+4,	6.309573E+4,
+    5.623413E+4,	5.011872E+4,	4.466836E+4,	3.981072E+4,	3.548134E+4,
+    3.162278E+4,	2.818383E+4,	2.511886E+4,	2.238721E+4,	1.995262E+4,
+    1.778279E+4,	1.584893E+4,	1.412538E+4,	1.258925E+4,	1.122018E+4,
+    1.000000E+4,	8.912509E+3,	7.943282E+3,	7.079458E+3,	6.309573E+3,
+    5.623413E+3,	5.011872E+3,	4.466836E+3,	3.981072E+3,	3.548134E+3,
+    3.162278E+3,	2.818383E+3,	2.511886E+3,	2.238721E+3,	1.995262E+3,
+    1.778279E+3,	1.584893E+3,	1.412538E+3,	1.258925E+3,	1.122018E+3,
+    1.000000E+3,	8.912509E+2,	7.943282E+2,	7.079458E+2,	6.309573E+2,
+    5.623413E+2,	5.011872E+2,	4.466836E+2,	3.981072E+2,	3.548134E+2,
+    3.162278E+2,	2.818383E+2,	2.511886E+2,	2.238721E+2,	1.995262E+2,
+    1.778279E+2,	1.584893E+2,	1.412538E+2,	1.258925E+2,	1.122018E+2,
+    1.000000E+2,	8.912509E+1,	7.943282E+1,	7.079458E+1,	6.309573E+1,
+    5.623413E+1,	5.011872E+1,	4.466836E+1,	3.981072E+1,	3.548134E+1,
+    3.162278E+1,	2.818383E+1,	2.511886E+1,	2.238721E+1,	1.995262E+1,
+    1.778279E+1,	1.584893E+1,	1.412538E+1,	1.258925E+1,	1.122018E+1,
+    1.000000E+1,	8.912509E+0,	7.943282E+0,	7.079458E+0,	6.309573E+0,
+    5.623413E+0,	5.011872E+0,	4.466836E+0,	3.981072E+0,	3.548134E+0,
+    3.162278E+0,	2.818383E+0,	2.511886E+0,	2.238721E+0,	1.995262E+0,
+    1.778279E+0,	1.584893E+0,	1.412538E+0,	1.258925E+0,	1.122018E+0,
+    1.000000E+0,	8.912509E-1,	7.943282E-1,	7.079458E-1,	6.309573E-1,
+    5.623413E-1,	5.011872E-1,	4.466836E-1,	3.981072E-1,	3.548134E-1,
+    3.162278E-1,	2.818383E-1,	2.511886E-1,	2.238721E-1,	1.995262E-1,
+    1.778279E-1,	1.584893E-1,	1.412538E-1,	1.258925E-1,	1.122018E-1,
+    1.000000E-1,	8.912509E-2,	7.943282E-2,	7.079458E-2,	6.309573E-2,
+    5.623413E-2,	5.011872E-2,	4.466836E-2,	3.981072E-2,	3.548134E-2,
+    3.162278E-2,	2.818383E-2,	2.511886E-2,	2.238721E-2,	1.995262E-2,
+    1.778279E-2,	1.584893E-2,	1.412538E-2,	1.258925E-2,	1.122018E-2,
+    1.000000E-2,	8.912509E-3,	7.943282E-3,	7.079458E-3,	6.309573E-3,
+    5.623413E-3,	5.011872E-3,	4.466836E-3,	3.981072E-3,	3.548134E-3,
+    3.162278E-3,	2.818383E-3,	2.511886E-3,	2.238721E-3,	1.995262E-3,
+    1.778279E-3,	1.584893E-3,	1.412538E-3,	1.258925E-3,	1.122018E-3,
+    1.000000E-3
+}; // frequency data
+void custom1(double *p, double *y, int m, int n, void *data)
+{
+    // PREMISS: the 1st half of y is real part and the other is imaginary part of the observed data
+    //          y = { z1[0], z1[1], ..., z1[n/2 - 1], z2[0], z2[1], ..., z2[n/2 - 1] }
+
+    register int i;
+    int Ns = (int)(n / 2);
+
+    double L = p[0];
+    double Rs = p[1];
+    double Rp = p[2];
+    double Qy = p[3];
+    double Qa = p[4];
+
+    double *ff = (double*)data;
+    for (i = 0; i < Ns; ++i, ff++)
+    {
+        double f = *ff;
+        complex <double> s(0.0, twopi * f); // s = j * w, where angular frequency w = 2 * pi * f
+        complex <double> cm = Rp * Qy * pow(s, Qa);
+        complex <double> z = s * L + Rs + Rp / (1.0 + cm);
+
+        y[i] = real(z);
+        y[Ns + i] = imag(z);
+    }
+}
+void custom1prime(double *p, double *jac, int m, int n, void *data)
+{
+    register int i;
+    int Ns = (int)(n / 2);
+
+    double L = p[0];
+    double Rs = p[1];
+    double Rp = p[2];
+    double Qy = p[3];
+    double Qa = p[4];
+
+    double *ff = (double*)data;
+    for (i = 0; i < Ns; ++i, ff++)
+    {
+        double f = *ff;
+        complex <double> s(0.0, twopi * f); // s = j * w, where angular frequency w = 2 * pi * f
+        complex <double> cm = Rp * Qy * pow(s, Qa);
+
+        complex <double> jac0 = s;
+        complex <double> jac1 = 1.0;
+        complex <double> jac2 = 1.0 / pow(1.0 + cm, 2);
+        complex <double> jac3 = -Rp * Rp * pow(s, Qa) / pow(1.0 + cm, 2);
+        complex <double> jac4 = -Rp * cm * log(s) / pow(1.0 + cm, 2);
+
+        jac[m*i] = real(jac0);
+        jac[m*i + 1] = real(jac1);
+        jac[m*i + 2] = real(jac2);
+        jac[m*i + 3] = real(jac3);
+        jac[m*i + 4] = real(jac4);
+        jac[m*(Ns + i)] = imag(jac0);
+        jac[m*(Ns + i) + 1] = imag(jac1);
+        jac[m*(Ns + i) + 2] = imag(jac2);
+        jac[m*(Ns + i) + 3] = imag(jac3);
+        jac[m*(Ns + i) + 4] = imag(jac4);
+    }
+}
+
+#pragma endregion
+
 int main()
 {
 	int i, ret;
@@ -363,6 +559,7 @@ int main()
 
 	double p[40]; // initial parameter estimates
     double lb[40]; // lower bound of parameters
+    //double ub[40]; // upper bound of parameters
     double x[40]; // measurement vector
     
 	double opts[LM_OPTS_SZ];
@@ -506,19 +703,18 @@ int main()
     //
 
     m = 3; n = 181;
-    p[0] = 1; p[1] = 1; p[2] = 1e-3; // initial values of parameters    
+    
+    double randle_y[362];
+    memcpy(randle_y, randle_z1, n * sizeof(double));
+    memcpy(&randle_y[n], randle_z2, n * sizeof(double));
 
-    double ydata[362];
-    memcpy(ydata, randle_z1, n * sizeof(double));
-    memcpy(&ydata[n], randle_z2, n * sizeof(double));
-
-    // Cs may be going to be negative. so set lower bound!!!
     lb[0] = 1e-20; lb[1] = 1e-20; lb[2] = 1e-20; // set lower bound
 
     //
     // 6.1 analytic Jacobian
     //
-    ret = dlevmar_bc_der(randle, randleprime, p, ydata, m, 2 * n, lb, NULL, NULL, maxiteration, opts, info, NULL, NULL, randle_f);
+    p[0] = 1; p[1] = 1; p[2] = 1e-3; // initial values of parameters    
+    ret = dlevmar_bc_der(randle, randleprime, p, randle_y, m, 2 * n, lb, NULL, NULL, maxiteration, opts, info, NULL, NULL, randle_f);
 
     printf("Results for Randle - with analytic Jacobian\n");
     printf("Levenberg-Marquardt returned %d in %g iter, reason %g\nSolution: ", ret, info[5], info[6]);
@@ -539,7 +735,8 @@ int main()
     //
     // 6.2 finite difference approximated Jacobian
     //
-    ret = dlevmar_bc_dif(randle, p, ydata, m, 2 * n, lb, NULL, NULL, maxiteration, opts, info, NULL, NULL, randle_f);
+    p[0] = 1; p[1] = 1; p[2] = 1e-3; // initial values of parameters    
+    ret = dlevmar_bc_dif(randle, p, randle_y, m, 2 * n, lb, NULL, NULL, maxiteration, opts, info, NULL, NULL, randle_f);
 
     printf("Results for Randle - with finite difference approximated Jacobian \n");
     printf("Levenberg-Marquardt returned %d in %g iter, reason %g\nSolution: ", ret, info[5], info[6]);
@@ -548,6 +745,62 @@ int main()
     printf("\nExpected: ");
     for (i = 0; i < m; ++i)
         printf("%12.7g ", randle_p[i]);
+    printf("\n\nMinimization info:\n");
+    for (i = 0; i < LM_INFO_SZ; ++i)
+        printf("%g ", info[i]);
+
+    printf("\n");
+    printf("\n");
+    printf("-----------------------------------------\n");
+    printf("\n");
+
+    //
+    // 7. Custom1, L-Rs-Rp|Q - Complex non-linear Regression
+    //
+
+    m = 5; n = 181;
+
+    double custom1_y[362];
+    memcpy(custom1_y, custom1_z1, n * sizeof(double));
+    memcpy(&custom1_y[n], custom1_z2, n * sizeof(double));
+
+    lb[0] = 1e-10; lb[1] = 1e-10; lb[2] = 1e-10; lb[3] = 1e-10; lb[4] = 1e-10;// set lower bound
+
+    //
+    // 7.1 analytic Jacobian
+    //
+    p[0] = 1e-6; p[1] = 0.181; p[2] = 7.981; p[3] = 0.032; p[4] = 0.666; // initial values of parameters    
+    ret = dlevmar_bc_der(custom1, custom1prime, p, custom1_y, m, 2 * n, lb, NULL, NULL, maxiteration, opts, info, NULL, NULL, custom1_f);
+
+    printf("Results for L-Rs-Rp|Q - with analytic Jacobian\n");
+    printf("Levenberg-Marquardt returned %d in %g iter, reason %g\nSolution: ", ret, info[5], info[6]);
+    for (i = 0; i < m; ++i)
+        printf("%12.7g ", p[i]);
+    printf("\nExpected: ");
+    for (i = 0; i < m; ++i)
+        printf("%12.7g ", custom1_p[i]);
+    printf("\n\nMinimization info:\n");
+    for (i = 0; i < LM_INFO_SZ; ++i)
+        printf("%g ", info[i]);
+
+    printf("\n");
+    printf("\n");
+    printf("-----------------------------------------\n");
+    printf("\n");
+
+    //
+    // 7.2 finite difference approximated Jacobian
+    //
+    p[0] = 1e-6; p[1] = 0.181; p[2] = 7.981; p[3] = 0.032; p[4] = 0.666; // initial values of parameters    
+    ret = dlevmar_bc_dif(custom1, p, custom1_y, m, 2 * n, lb, NULL, NULL, maxiteration, opts, info, NULL, NULL, custom1_f);
+
+    printf("Results for L-Rs-Rp|Q - with difference approximated Jacobian\n");
+    printf("Levenberg-Marquardt returned %d in %g iter, reason %g\nSolution: ", ret, info[5], info[6]);
+    for (i = 0; i < m; ++i)
+        printf("%12.7g ", p[i]);
+    printf("\nExpected: ");
+    for (i = 0; i < m; ++i)
+        printf("%12.7g ", custom1_p[i]);
     printf("\n\nMinimization info:\n");
     for (i = 0; i < LM_INFO_SZ; ++i)
         printf("%g ", info[i]);
