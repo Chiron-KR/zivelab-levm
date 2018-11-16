@@ -9,7 +9,9 @@
 
 using namespace std;
 
-#define twopi   6.2831853071795864769252867665590057683943387987502 // 2 * pi
+#define TwoPi   6.2831853071795864769252867665590057683943387987502 // 2 * pi
+#define OneOverSqrt2 0.70710678118654752440084436210484903928483593768847 // 1/sqrt(2)
+#define OneOverTwoSqrtPi 0.28209479177387814347403972578038629292202531466450 // 1/(2*sqrt(pi))
 
 #pragma region Define Rosenbrock
 
@@ -318,7 +320,7 @@ void randle(double *p, double *y, int m, int n, void *data)
     for (i = 0; i < Ns; ++i, ff++)
     {
         double f = *ff; 
-        complex <double> s(0.0, twopi * f); // s = j * w, where angular frequency w = 2 * pi * f
+        complex <double> s(0.0, TwoPi * f); // s = j * w, where angular frequency w = 2 * pi * f
         complex <double> z = Rs + Rct / (1.0 + Rct * Cdl * s); //is better than Rs + 1.0 / (1.0 / Rct + Cdl * s);
 
         y[i] = real(z);
@@ -338,7 +340,7 @@ void randleprime(double *p, double *jac, int m, int n, void *data)
     for (i = 0; i < Ns; ++i, ff++)
     {
         double f = *ff;
-        complex <double> s (0.0, twopi * f); // s = j * w, where angular frequency w = 2 * pi * f
+        complex <double> s (0.0, TwoPi * f); // s = j * w, where angular frequency w = 2 * pi * f
         complex <double> jac0 = 1.0;
         complex <double> jac1 = 1.0 / ((1.0 + Rct * Cdl * s) * (1.0 + Rct * Cdl * s));
         complex <double> jac2 = - Rct * Rct * s / ((1.0 + Rct * Cdl * s) * (1.0 + Rct * Cdl * s));
@@ -503,7 +505,7 @@ void custom1(double *p, double *y, int m, int n, void *data)
     for (i = 0; i < Ns; ++i, ff++)
     {
         double f = *ff;
-        complex <double> s(0.0, twopi * f); // s = j * w, where angular frequency w = 2 * pi * f
+        complex <double> s(0.0, TwoPi * f); // s = j * w, where angular frequency w = 2 * pi * f
         complex <double> cm = Rp * Qy * pow(s, Qa);
         complex <double> z = s * L + Rs + Rp / (1.0 + cm);
 
@@ -526,14 +528,15 @@ void custom1prime(double *p, double *jac, int m, int n, void *data)
     for (i = 0; i < Ns; ++i, ff++)
     {
         double f = *ff;
-        complex <double> s(0.0, twopi * f); // s = j * w, where angular frequency w = 2 * pi * f
+        complex <double> s(0.0, TwoPi * f); // s = j * w, where angular frequency w = 2 * pi * f
         complex <double> cm = Rp * Qy * pow(s, Qa);
+        complex <double> cmSq = (1.0 + cm) * (1.0 + cm);
 
         complex <double> jac0 = s;
         complex <double> jac1 = 1.0;
-        complex <double> jac2 = 1.0 / pow(1.0 + cm, 2);
-        complex <double> jac3 = -Rp * Rp * pow(s, Qa) / pow(1.0 + cm, 2);
-        complex <double> jac4 = -Rp * cm * log(s) / pow(1.0 + cm, 2);
+        complex <double> jac2 = 1.0 / cmSq;
+        complex <double> jac3 = -Rp * Rp * pow(s, Qa) / cmSq;
+        complex <double> jac4 = -Rp * cm * log(s) / cmSq;
 
         jac[m*i] = real(jac0);
         jac[m*i + 1] = real(jac1);
@@ -545,6 +548,154 @@ void custom1prime(double *p, double *jac, int m, int n, void *data)
         jac[m*(Ns + i) + 2] = imag(jac2);
         jac[m*(Ns + i) + 3] = imag(jac3);
         jac[m*(Ns + i) + 4] = imag(jac4);
+    }
+}
+
+#pragma endregion
+
+#pragma region Define Custom2 - L-Rs-Rp|Q-W
+
+// Model Expression = L-Rs-Rp|Q-W
+// Z = Rs + 1/(W*sqrt(s)) + L*s + 1/(1/Rp + Qy*s^Qa)
+// Parameters = { L, Rs, Rp, Qy, Qa, W }
+// dZ/dL = s
+// dZ/dRs = 1
+// dZ/dRp = 1/(Rp^2*(1/Rp + Qy*s^Qa)^2)
+// dZ/dQy = -s^Qa/(1/Rp + Qy*s^Qa)^2
+// dZ/dQa = -(Qy*s^Qa*ln(s))/(1/Rp + Qy*s^Qa)^2
+// dZ/dW  = -1/(W^2*sqrt(s))
+
+double custom2_p[6] = {
+    0.001,    0.1,    0.1,   2,  0.8,    1.0
+}; // best parameters
+double custom2_z1[81] = {
+    1.090637E-1,	1.096063E-1,	1.101815E-1,	1.107915E-1,	1.114383E-1,
+    1.121241E-1,	1.128515E-1,	1.136229E-1,	1.144410E-1,	1.153087E-1,
+    1.162291E-1,	1.172054E-1,	1.182412E-1,	1.193401E-1,	1.205061E-1,
+    1.217433E-1,	1.230564E-1,	1.244500E-1,	1.259292E-1,	1.274997E-1,
+    1.291670E-1,	1.309376E-1,	1.328181E-1,	1.348157E-1,	1.369380E-1,
+    1.391933E-1,	1.415905E-1,	1.441390E-1,	1.468491E-1,	1.497318E-1,
+    1.527991E-1,	1.560636E-1,	1.595394E-1,	1.632412E-1,	1.671853E-1,
+    1.713890E-1,	1.758712E-1,	1.806521E-1,	1.857537E-1,	1.911995E-1,
+    1.970146E-1,	2.032262E-1,	2.098627E-1,	2.169547E-1,	2.245340E-1,
+    2.326337E-1,	2.412879E-1,	2.505312E-1,	2.603985E-1,	2.709235E-1,
+    2.821389E-1,	2.940753E-1,	3.067603E-1,	3.202183E-1,	3.344696E-1,
+    3.495311E-1,	3.654160E-1,	3.821347E-1,	3.996965E-1,	4.181103E-1,
+    4.373873E-1,	4.575423E-1,	4.785959E-1,	5.005757E-1,	5.235182E-1,
+    5.474690E-1,	5.724834E-1,	5.986268E-1,	6.259741E-1,	6.546094E-1,
+    6.846253E-1,	7.161228E-1,	7.492103E-1,	7.840034E-1,	8.206247E-1,
+    8.592038E-1,	8.998768E-1,	9.427868E-1,	9.880843E-1,	1.035927E+0,
+    1.086481E+0
+}; // real part of the observed data
+double custom2_z2[81] = {
+    6.273831E+0,	5.589970E+0,	4.980381E+0,	4.436981E+0,	3.952565E+0,
+    3.520712E+0,	3.135699E+0,	2.792424E+0,	2.486339E+0,	2.213392E+0,
+    1.969969E+0,	1.752850E+0,	1.559163E+0,	1.386349E+0,	1.232126E+0,
+    1.094459E+0,	9.715346E-1,	8.617343E-1,	7.636154E-1,	6.758913E-1,
+    5.974138E-1,	5.271587E-1,	4.642118E-1,	4.077572E-1,	3.570663E-1,
+    3.114884E-1,	2.704418E-1,	2.334067E-1,	1.999183E-1,	1.695602E-1,
+    1.419597E-1,	1.167829E-1,	9.372993E-2,	7.253173E-2,	5.294639E-2,
+    3.475628E-2,	1.776532E-2,	1.796755E-3,	-1.330894E-2,	-2.769582E-2,
+    -4.149400E-2,	-5.482101E-2,	-6.778289E-2,	-8.047517E-2,	-9.298370E-2,
+    -1.053853E-1,	-1.177485E-1,	-1.301340E-1,	-1.425952E-1,	-1.551793E-1,
+    -1.679273E-1,	-1.808757E-1,	-1.940573E-1,	-2.075026E-1,	-2.212415E-1,
+    -2.353049E-1,	-2.497267E-1,	-2.645454E-1,	-2.798061E-1,	-2.955613E-1,
+    -3.118717E-1,	-3.288069E-1,	-3.464450E-1,	-3.648720E-1,	-3.841807E-1,
+    -4.044698E-1,	-4.258426E-1,	-4.484062E-1,	-4.722705E-1,	-4.975474E-1,
+    -5.243509E-1,	-5.527970E-1,	-5.830037E-1,	-6.150915E-1,	-6.491838E-1,
+    -6.854081E-1,	-7.238958E-1,	-7.647838E-1,	-8.082148E-1,	-8.543382E-1,
+    -9.033109E-1
+}; // imaginary part of the observed data
+double custom2_f[81] = {
+    1.000000E+3,	8.912509E+2,	7.943282E+2,	7.079458E+2,	6.309573E+2,
+    5.623413E+2,	5.011872E+2,	4.466836E+2,	3.981072E+2,	3.548134E+2,
+    3.162278E+2,	2.818383E+2,	2.511886E+2,	2.238721E+2,	1.995262E+2,
+    1.778279E+2,	1.584893E+2,	1.412538E+2,	1.258925E+2,	1.122018E+2,
+    1.000000E+2,	8.912509E+1,	7.943282E+1,	7.079458E+1,	6.309573E+1,
+    5.623413E+1,	5.011872E+1,	4.466836E+1,	3.981072E+1,	3.548134E+1,
+    3.162278E+1,	2.818383E+1,	2.511886E+1,	2.238721E+1,	1.995262E+1,
+    1.778279E+1,	1.584893E+1,	1.412538E+1,	1.258925E+1,	1.122018E+1,
+    1.000000E+1,	8.912509E+0,	7.943282E+0,	7.079458E+0,	6.309573E+0,
+    5.623413E+0,	5.011872E+0,	4.466836E+0,	3.981072E+0,	3.548134E+0,
+    3.162278E+0,	2.818383E+0,	2.511886E+0,	2.238721E+0,	1.995262E+0,
+    1.778279E+0,	1.584893E+0,	1.412538E+0,	1.258925E+0,	1.122018E+0,
+    1.000000E+0,	8.912509E-1,	7.943282E-1,	7.079458E-1,	6.309573E-1,
+    5.623413E-1,	5.011872E-1,	4.466836E-1,	3.981072E-1,	3.548134E-1,
+    3.162278E-1,	2.818383E-1,	2.511886E-1,	2.238721E-1,	1.995262E-1,
+    1.778279E-1,	1.584893E-1,	1.412538E-1,	1.258925E-1,	1.122018E-1,
+    1.000000E-1
+}; // frequency data
+void custom2(double *p, double *y, int m, int n, void *data)
+{
+    // PREMISS: the 1st half of y is real part and the other is imaginary part of the observed data
+    //          y = { z1[0], z1[1], ..., z1[n/2 - 1], z2[0], z2[1], ..., z2[n/2 - 1] }
+
+    register int i;
+    int Ns = (int)(n / 2);
+
+    double L = p[0];
+    double Rs = p[1];
+    double Rp = p[2];
+    double Qy = p[3];
+    double Qa = p[4];
+    double W = p[5];
+
+    complex <double> oneOverSqrtj2Pi(OneOverTwoSqrtPi, -OneOverTwoSqrtPi); // 1/sqrt(2 pi j)
+
+    double *ff = (double*)data;
+    for (i = 0; i < Ns; ++i, ff++)
+    {
+        double f = *ff;
+        complex <double> s(0.0, TwoPi * f); // s = j * w, where angular frequency w = 2 * pi * f
+        
+        complex <double> cm = Rp * Qy * pow(s, Qa);
+        complex <double> z = s * L + Rs + Rp / (1.0 + cm) + oneOverSqrtj2Pi / (W * sqrt(f));
+
+        y[i] = real(z);
+        y[Ns + i] = imag(z);
+    }
+}
+void custom2prime(double *p, double *jac, int m, int n, void *data)
+{
+    register int i;
+    int Ns = (int)(n / 2);
+
+    double L = p[0];
+    double Rs = p[1];
+    double Rp = p[2];
+    double Qy = p[3];
+    double Qa = p[4];
+    double W = p[5];
+
+    complex <double> oneOverSqrtj2Pi(OneOverTwoSqrtPi, -OneOverTwoSqrtPi); // 1/sqrt(2 pi j)
+
+    double *ff = (double*)data;
+    for (i = 0; i < Ns; ++i, ff++)
+    {
+        double f = *ff;
+        complex <double> s(0.0, TwoPi * f); // s = j * w, where angular frequency w = 2 * pi * f
+        complex <double> cm = Rp * Qy * pow(s, Qa);
+        complex <double> cmSq = (1.0 + cm) * (1.0 + cm);
+
+        complex <double> jac0 = s;
+        complex <double> jac1 = 1.0;
+        complex <double> jac2 = 1.0 / cmSq;
+        complex <double> jac3 = -Rp * Rp * pow(s, Qa) / cmSq;
+        complex <double> jac4 = -Rp * cm * log(s) / cmSq;
+        complex <double> jac5 = -oneOverSqrtj2Pi / (W * W * sqrt(f));
+
+        jac[m*i] = real(jac0);
+        jac[m*i + 1] = real(jac1);
+        jac[m*i + 2] = real(jac2);
+        jac[m*i + 3] = real(jac3);
+        jac[m*i + 4] = real(jac4);
+        jac[m*i + 5] = real(jac5);
+        jac[m*(Ns + i)] = imag(jac0);
+        jac[m*(Ns + i) + 1] = imag(jac1);
+        jac[m*(Ns + i) + 2] = imag(jac2);
+        jac[m*(Ns + i) + 3] = imag(jac3);
+        jac[m*(Ns + i) + 4] = imag(jac4);
+        jac[m*(Ns + i) + 5] = imag(jac5);
     }
 }
 
@@ -628,7 +779,7 @@ int main()
     //
 
 	m = 6; n = 24;
-	p[0] = 1.2; p[1] = 0.3; p[2] = 5.6; p[3] = 5.5; p[4] = 6.5; p[5] = 7.6;
+	p[0] = 1.2; p[1] = 0.3; p[2] = 5.6; p[3] = 5.5; p[4] = 6.5; p[5] = 7.6; // initail values
 
 	ret = dlevmar_dif(lanczos1, p, lanczos1_y, m, n, maxiteration, opts, info, NULL, NULL, lanczos1_x);
 
@@ -678,7 +829,7 @@ int main()
     //
 
     m = 4; n = 15;
-    p[0] = 100; p[1] = 10; p[2] = 1; p[3] = 1;
+    p[0] = 100; p[1] = 10; p[2] = 1; p[3] = 1; // initial values
         
     ret = dlevmar_dif(rat43, p, rat43_y, m, n, maxiteration, opts, info, NULL, NULL, rat43_x);
 
@@ -713,7 +864,7 @@ int main()
     //
     // 6.1 analytic Jacobian
     //
-    p[0] = 1; p[1] = 1; p[2] = 1e-3; // initial values of parameters    
+    p[0] = 1; p[1] = 1; p[2] = 1e-3; // initial values   
     ret = dlevmar_bc_der(randle, randleprime, p, randle_y, m, 2 * n, lb, NULL, NULL, maxiteration, opts, info, NULL, NULL, randle_f);
 
     printf("Results for Randle - with analytic Jacobian\n");
@@ -735,7 +886,7 @@ int main()
     //
     // 6.2 finite difference approximated Jacobian
     //
-    p[0] = 1; p[1] = 1; p[2] = 1e-3; // initial values of parameters    
+    p[0] = 1; p[1] = 1; p[2] = 1e-3; // initial values 
     ret = dlevmar_bc_dif(randle, p, randle_y, m, 2 * n, lb, NULL, NULL, maxiteration, opts, info, NULL, NULL, randle_f);
 
     printf("Results for Randle - with finite difference approximated Jacobian \n");
@@ -769,7 +920,7 @@ int main()
     //
     // 7.1 analytic Jacobian
     //
-    p[0] = 1e-6; p[1] = 0.181; p[2] = 7.981; p[3] = 0.032; p[4] = 0.666; // initial values of parameters    
+    p[0] = 1e-6; p[1] = 0.181; p[2] = 7.981; p[3] = 0.032; p[4] = 0.666; // initial values  
     ret = dlevmar_bc_der(custom1, custom1prime, p, custom1_y, m, 2 * n, lb, NULL, NULL, maxiteration, opts, info, NULL, NULL, custom1_f);
 
     printf("Results for L-Rs-Rp|Q - with analytic Jacobian\n");
@@ -791,7 +942,7 @@ int main()
     //
     // 7.2 finite difference approximated Jacobian
     //
-    p[0] = 1e-6; p[1] = 0.181; p[2] = 7.981; p[3] = 0.032; p[4] = 0.666; // initial values of parameters    
+    p[0] = 1e-6; p[1] = 0.181; p[2] = 7.981; p[3] = 0.032; p[4] = 0.666; // initial values   
     ret = dlevmar_bc_dif(custom1, p, custom1_y, m, 2 * n, lb, NULL, NULL, maxiteration, opts, info, NULL, NULL, custom1_f);
 
     printf("Results for L-Rs-Rp|Q - with difference approximated Jacobian\n");
@@ -801,6 +952,62 @@ int main()
     printf("\nExpected: ");
     for (i = 0; i < m; ++i)
         printf("%12.7g ", custom1_p[i]);
+    printf("\n\nMinimization info:\n");
+    for (i = 0; i < LM_INFO_SZ; ++i)
+        printf("%g ", info[i]);
+
+    printf("\n");
+    printf("\n");
+    printf("-----------------------------------------\n");
+    printf("\n");
+
+    //
+    // 8. Custom2, L-Rs-Rp|Q-W - Complex non-linear Regression
+    //
+
+    m = 6; n = 81;
+
+    double custom2_y[162];
+    memcpy(custom2_y, custom2_z1, n * sizeof(double));
+    memcpy(&custom2_y[n], custom2_z2, n * sizeof(double));
+
+    lb[0] = 1e-10; lb[1] = 1e-10; lb[2] = 1e-10; lb[3] = 1e-10; lb[4] = 1e-10; lb[5] = 1e-10;// set lower bound
+
+    //
+    // 8.1 analytic Jacobian
+    //
+    p[0] = 2e-3; p[1] = 0.08; p[2] = 0.210; p[3] = 2.272; p[4] = 0.7; p[5] = 1.4; // initial values 
+    ret = dlevmar_bc_der(custom2, custom2prime, p, custom2_y, m, 2 * n, lb, NULL, NULL, maxiteration, opts, info, NULL, NULL, custom2_f);
+
+    printf("Results for L-Rs-Rp|Q-W - with analytic Jacobian\n");
+    printf("Levenberg-Marquardt returned %d in %g iter, reason %g\nSolution: ", ret, info[5], info[6]);
+    for (i = 0; i < m; ++i)
+        printf("%12.7g ", p[i]);
+    printf("\nExpected: ");
+    for (i = 0; i < m; ++i)
+        printf("%12.7g ", custom2_p[i]);
+    printf("\n\nMinimization info:\n");
+    for (i = 0; i < LM_INFO_SZ; ++i)
+        printf("%g ", info[i]);
+
+    printf("\n");
+    printf("\n");
+    printf("-----------------------------------------\n");
+    printf("\n");
+
+    //
+    // 8.2 finite difference approximated Jacobian
+    //
+    p[0] = 2e-3; p[1] = 0.08; p[2] = 0.210; p[3] = 2.272; p[4] = 0.7; p[5] = 1.4; // initial values
+    ret = dlevmar_bc_dif(custom2, p, custom2_y, m, 2 * n, lb, NULL, NULL, maxiteration, opts, info, NULL, NULL, custom2_f);
+
+    printf("Results for L-Rs-Rp|Q-W - with difference approximated Jacobian\n");
+    printf("Levenberg-Marquardt returned %d in %g iter, reason %g\nSolution: ", ret, info[5], info[6]);
+    for (i = 0; i < m; ++i)
+        printf("%12.7g ", p[i]);
+    printf("\nExpected: ");
+    for (i = 0; i < m; ++i)
+        printf("%12.7g ", custom2_p[i]);
     printf("\n\nMinimization info:\n");
     for (i = 0; i < LM_INFO_SZ; ++i)
         printf("%g ", info[i]);
