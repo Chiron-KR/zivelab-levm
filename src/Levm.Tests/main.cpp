@@ -11,9 +11,7 @@ using namespace std;
 
 #define twopi   6.2831853071795864769252867665590057683943387987502 // 2 * pi
 
-//
-// 1. Rosenbrock
-//
+#pragma region Define Rosenbrock
 
 #define ROSD 105.0
 double rosenbrock_p[2] = { 1.0, 1.0 }; // best parameters
@@ -33,10 +31,11 @@ void rosenbrockprime(double *p, double *jac, int m, int n, void *data)
 	}
 }
 
-//
-// 2. Norris
+#pragma endregion 
+
+#pragma region Define Norris
+
 // https://www.itl.nist.gov/div898/strd/lls/data/Norris.shtml
-//
 
 double norris_p[2] = { -0.262323073774029, 1.00211681802045 }; // best parameters
 double norris_y[36] = {
@@ -67,8 +66,10 @@ void norrisprime(double *p, double *jac, int m, int n, void *data)
 	}
 }
 
-//
-// 3. Lanczos1
+#pragma endregion
+
+#pragma region Define Lanczos1
+
 // https://www.itl.nist.gov/div898/strd/nls/data/lanczos1.shtml
 //
 
@@ -99,8 +100,10 @@ void lanczos1(double *p, double *y, int m, int n, void *data)
 	}
 }
 
-//
-// 4. Thurber
+#pragma endregion
+
+#pragma region Define Thurber
+
 // https://www.itl.nist.gov/div898/strd/nls/data/thurber.shtml
 //
 
@@ -139,10 +142,11 @@ void thurber(double *p, double *y, int m, int n, void *data)
 	}
 }
 
-//
-// 5. Rat43
+#pragma endregion
+
+#pragma region Define Rat43
+
 // https://www.itl.nist.gov/div898/strd/nls/data/ratkowsky3.shtml
-//
 
 double rat43_p[4] = {
     699.641512700000,   5.277125302500, 0.759629383290, 1.279248385900
@@ -167,10 +171,13 @@ void rat43(double *p, double *y, int m, int n, void *data)
     }
 }
 
-//
-// 6. Randle
-// Model = Rs-Rct|Cdl
+#pragma endregion
+
+#pragma region Define Randle - Rs-Rct|Cdl
+
+// Model Expression = Rs-Rct|Cdl
 // Z = Rs + 1/(1/Rct + Cdl*s)
+// Parameters = { Rs, rct, Cdl }
 // dZ/dRs = 1
 // dZ/dRct = 1 / (Rct ^ 2 * (1 / Rct + Cdl * s) ^ 2)
 // dZ/dCdl = -s / (1 / Rct + Cdl * s) ^ 2
@@ -344,6 +351,8 @@ void randleprime(double *p, double *jac, int m, int n, void *data)
         jac[m*(Ns + i) + 2] = imag(jac2);
     }
 }
+
+#pragma endregion
 
 int main()
 {
