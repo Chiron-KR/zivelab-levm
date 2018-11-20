@@ -99,10 +99,11 @@ void lanczos1(double *p, double *y, int m, int n, void *data)
 {
 	register int i;
 
-	double *xx = (double*)data;
+    double x;
+    double *xx = (double*)data;    
 	for (i = 0; i < n; ++i, xx++)
 	{
-		double x = *xx;
+		x = *xx;
 		y[i] = p[0] * exp(-p[1] * x) + p[2] * exp(-p[3] * x) + p[4] * exp(-p[5] * x);
 	}
 }
@@ -141,10 +142,11 @@ void thurber(double *p, double *y, int m, int n, void *data)
 {
 	register int i;
 
+    double x;
 	double *xx = (double*)data;
 	for (i = 0; i < n; ++i, xx++)
 	{
-		double x = *xx;
+		x = *xx;
 		y[i] = (p[0] + p[1] * x + p[2] * x*x + p[3] * x*x*x) / (1 + p[4] * x + p[5] * x*x + p[6] * x*x*x);
 	}
 }
@@ -170,10 +172,11 @@ void rat43(double *p, double *y, int m, int n, void *data)
 {
     register int i;
 
+    double x;
     double *xx = (double*)data;
     for (i = 0; i < n; ++i, xx++)
     {
-        double x = *xx;
+        x = *xx;
         y[i] = p[0] / pow(1.0 + exp(p[1] - p[2] * x), 1.0 / p[3]);
     }
 }
@@ -322,7 +325,7 @@ void randle(double *p, double *y, int m, int n, void *data)
     double Cdl = p[2];
 
     double f;
-    complex <double> s(0, 0);
+    complex <double> s;
     complex <double> z;
 
     double *ff = (double*)data; 
@@ -346,8 +349,8 @@ void randleprime(double *p, double *jac, int m, int n, void *data)
     double Cdl = p[2];    
 
     double f;
-    complex <double> s (0, 0);
-    complex <double> cm (0, 0);
+    complex <double> s;
+    complex <double> cm;
     complex <double> jac0, jac1, jac2;
 
     double *ff = (double*)data;
@@ -517,13 +520,16 @@ void custom1(double *p, double *y, int m, int n, void *data)
     double Qy = p[3];
     double Qa = p[4];
 
+    double f;
+    complex <double> s, cm, z;
+
     double *ff = (double*)data;
     for (i = 0; i < Ns; ++i, ff++)
     {
-        double f = *ff;
-        complex <double> s(0.0, TwoPi * f); // s = j * w, where angular frequency w = 2 * pi * f
-        complex <double> cm = Rp * Qy * pow(s, Qa);
-        complex <double> z = s * L + Rs + Rp / (1.0 + cm);
+        f = *ff;
+        s = { 0.0, TwoPi * f }; // s = j * w, where angular frequency w = 2 * pi * f
+        cm = Rp * Qy * pow(s, Qa);
+        z = s * L + Rs + Rp / (1.0 + cm);
 
         y[i] = real(z);
         y[Ns + i] = imag(z);
@@ -540,19 +546,23 @@ void custom1prime(double *p, double *jac, int m, int n, void *data)
     double Qy = p[3];
     double Qa = p[4];
 
+    double f;
+    complex <double> s, cm, cmSq;
+    complex <double> jac0, jac1, jac2, jac3, jac4;
+
     double *ff = (double*)data;
     for (i = 0; i < Ns; ++i, ff++)
     {
-        double f = *ff;
-        complex <double> s(0.0, TwoPi * f); // s = j * w, where angular frequency w = 2 * pi * f
-        complex <double> cm = Rp * Qy * pow(s, Qa);
-        complex <double> cmSq = (1.0 + cm) * (1.0 + cm);
+        f = *ff;
+        s = { 0.0, TwoPi * f }; // s = j * w, where angular frequency w = 2 * pi * f
+        cm = Rp * Qy * pow(s, Qa);
+        cmSq = (1.0 + cm) * (1.0 + cm);
 
-        complex <double> jac0 = s;
-        complex <double> jac1 = 1.0;
-        complex <double> jac2 = 1.0 / cmSq;
-        complex <double> jac3 = -Rp * Rp * pow(s, Qa) / cmSq;
-        complex <double> jac4 = -Rp * cm * log(s) / cmSq;
+        jac0 = s;
+        jac1 = 1.0;
+        jac2 = 1.0 / cmSq;
+        jac3 = -Rp * Rp * pow(s, Qa) / cmSq;
+        jac4 = -Rp * cm * log(s) / cmSq;
 
         jac[m*i] = real(jac0);
         jac[m*i + 1] = real(jac1);
@@ -656,16 +666,18 @@ void custom2(double *p, double *y, int m, int n, void *data)
     double Qa = p[4];
     double W = p[5];
 
+    double f;
+    complex <double> s, cm, z;
     complex <double> oneOverSqrtj2Pi(OneOverTwoSqrtPi, -OneOverTwoSqrtPi); // 1/sqrt(2 pi j)
 
     double *ff = (double*)data;
     for (i = 0; i < Ns; ++i, ff++)
     {
-        double f = *ff;
-        complex <double> s(0.0, TwoPi * f); // s = j * w, where angular frequency w = 2 * pi * f
+        f = *ff;
+        s = { 0.0, TwoPi * f }; // s = j * w, where angular frequency w = 2 * pi * f
         
-        complex <double> cm = Rp * Qy * pow(s, Qa);
-        complex <double> z = s * L + Rs + Rp / (1.0 + cm) + oneOverSqrtj2Pi / (W * sqrt(f));
+        cm = Rp * Qy * pow(s, Qa);
+        z = s * L + Rs + Rp / (1.0 + cm) + oneOverSqrtj2Pi / (W * sqrt(f));
 
         y[i] = real(z);
         y[Ns + i] = imag(z);
@@ -683,22 +695,26 @@ void custom2prime(double *p, double *jac, int m, int n, void *data)
     double Qa = p[4];
     double W = p[5];
 
+    double f;
+    complex <double> s, cm, cmSq;
+    complex <double> jac0, jac1, jac2, jac3, jac4, jac5;
+
     complex <double> oneOverSqrtj2Pi(OneOverTwoSqrtPi, -OneOverTwoSqrtPi); // 1/sqrt(2 pi j)
 
     double *ff = (double*)data;
     for (i = 0; i < Ns; ++i, ff++)
     {
-        double f = *ff;
-        complex <double> s(0.0, TwoPi * f); // s = j * w, where angular frequency w = 2 * pi * f
-        complex <double> cm = Rp * Qy * pow(s, Qa);
-        complex <double> cmSq = (1.0 + cm) * (1.0 + cm);
+        f = *ff;
+        s = { 0.0, TwoPi * f }; // s = j * w, where angular frequency w = 2 * pi * f
+        cm = Rp * Qy * pow(s, Qa);
+        cmSq = (1.0 + cm) * (1.0 + cm);
 
-        complex <double> jac0 = s;
-        complex <double> jac1 = 1.0;
-        complex <double> jac2 = 1.0 / cmSq;
-        complex <double> jac3 = -Rp * Rp * pow(s, Qa) / cmSq;
-        complex <double> jac4 = -Rp * cm * log(s) / cmSq;
-        complex <double> jac5 = -oneOverSqrtj2Pi / (W * W * sqrt(f));
+        jac0 = s;
+        jac1 = 1.0;
+        jac2 = 1.0 / cmSq;
+        jac3 = -Rp * Rp * pow(s, Qa) / cmSq;
+        jac4 = -Rp * cm * log(s) / cmSq;
+        jac5 = -oneOverSqrtj2Pi / (W * W * sqrt(f));
 
         jac[m*i] = real(jac0);
         jac[m*i + 1] = real(jac1);
@@ -712,6 +728,207 @@ void custom2prime(double *p, double *jac, int m, int n, void *data)
         jac[m*(Ns + i) + 3] = imag(jac3);
         jac[m*(Ns + i) + 4] = imag(jac4);
         jac[m*(Ns + i) + 5] = imag(jac5);
+    }
+}
+
+#pragma endregion
+
+#pragma region Define Custom3 - Ls-Rs-R1|Q1-(R2-W)|Q2
+
+// Model Expression = L-Rs-Rp|Q-W
+// Z = Rs + Ls*s + 1/(1/R1 + Q1y*s^Q1a) + 1/(1/(R2 + 1/(W*sqrt(s))) + Q2y*s^Q2a)
+// Parameters = { L, Rs, R1, Q1y, Q1a, R2, W, Q2y, Q2a}
+//dZ/dLs = s
+//dZ/dRs = 1
+//dZ/dR1 = 1 / (R1 ^ 2 * (1 / R1 + Q1y * s^Q1a) ^ 2)
+//dZ/dQ1y = -s ^ Q1a / (1 / R1 + Q1y * s^Q1a) ^ 2
+//dZ/dQ1a = -(Q1y*s^Q1a*ln(s)) / (1 / R1 + Q1y * s^Q1a) ^ 2
+//dZ/dR2 = 1 / ((R2 + 1 / (W*sqrt(s))) ^ 2 * (1 / (R2 + 1 / (W*sqrt(s))) + Q2y * s^Q2a) ^ 2)
+//dZ/dW = -1 / (W ^ 2 * (R2 + 1 / (W*sqrt(s))) ^ 2 * sqrt(s)*(1 / (R2 + 1 / (W*sqrt(s))) + Q2y * s^Q2a) ^ 2)
+//dZ/dQ2y = -s ^ Q2a / (1 / (R2 + 1 / (W*sqrt(s))) + Q2y * s^Q2a) ^ 2
+//dZ/dQ2a = -(Q2y*s^Q2a*ln(s)) / (1 / (R2 + 1 / (W*sqrt(s))) + Q2y * s^Q2a) ^ 2
+
+double custom3_p[9] = {
+    1E-5,    1,    1,   0.1,    0.9,    0.1,    1,  2,  0.65 
+}; // best parameters
+double custom3_z1[141] = {
+    1.000275000000E+0,	1.000298000000E+0,	1.000324000000E+0,	1.000353000000E+0,	1.000383000000E+0,
+    1.000417000000E+0,	1.000453000000E+0,	1.000493000000E+0,	1.000537000000E+0,	1.000584000000E+0,
+    1.000636000000E+0,	1.000693000000E+0,	1.000754000000E+0,	1.000822000000E+0,	1.000895000000E+0,
+    1.000976000000E+0,	1.001064000000E+0,	1.001161000000E+0,	1.001266000000E+0,	1.001382000000E+0,
+    1.001508000000E+0,	1.001647000000E+0,	1.001799000000E+0,	1.001966000000E+0,	1.002149000000E+0,
+    1.002350000000E+0,	1.002571000000E+0,	1.002814000000E+0,	1.003082000000E+0,	1.003376000000E+0,
+    1.003701000000E+0,	1.004060000000E+0,	1.004456000000E+0,	1.004894000000E+0,	1.005379000000E+0,
+    1.005916000000E+0,	1.006513000000E+0,	1.007176000000E+0,	1.007914000000E+0,	1.008738000000E+0,
+    1.009657000000E+0,	1.010687000000E+0,	1.011841000000E+0,	1.013138000000E+0,	1.014599000000E+0,
+    1.016247000000E+0,	1.018112000000E+0,	1.020227000000E+0,	1.022631000000E+0,	1.025369000000E+0,
+    1.028497000000E+0,	1.032077000000E+0,	1.036184000000E+0,	1.040903000000E+0,	1.046338000000E+0,
+    1.052605000000E+0,	1.059839000000E+0,	1.068196000000E+0,	1.077853000000E+0,	1.089008000000E+0,
+    1.101878000000E+0,	1.116702000000E+0,	1.133729000000E+0,	1.153216000000E+0,	1.175412000000E+0,
+    1.200543000000E+0,	1.228795000000E+0,	1.260287000000E+0,	1.295045000000E+0,	1.332984000000E+0,
+    1.373880000000E+0,	1.417371000000E+0,	1.462952000000E+0,	1.510001000000E+0,	1.557812000000E+0,
+    1.605640000000E+0,	1.652755000000E+0,	1.698492000000E+0,	1.742294000000E+0,	1.783733000000E+0,
+    1.822531000000E+0,	1.858550000000E+0,	1.891777000000E+0,	1.922308000000E+0,	1.950316000000E+0,
+    1.976034000000E+0,	1.999724000000E+0,	2.021668000000E+0,	2.042149000000E+0,	2.061444000000E+0,
+    2.079814000000E+0,	2.097506000000E+0,	2.114747000000E+0,	2.131749000000E+0,	2.148705000000E+0,
+    2.165792000000E+0,	2.183176000000E+0,	2.201011000000E+0,	2.219443000000E+0,	2.238611000000E+0,
+    2.258649000000E+0,	2.279687000000E+0,	2.301856000000E+0,	2.325284000000E+0,	2.350103000000E+0,
+    2.376446000000E+0,	2.404451000000E+0,	2.434260000000E+0,	2.466021000000E+0,	2.499891000000E+0,
+    2.536031000000E+0,	2.574615000000E+0,	2.615823000000E+0,	2.659850000000E+0,	2.706898000000E+0,
+    2.757184000000E+0,	2.810941000000E+0,	2.868412000000E+0,	2.929860000000E+0,	2.995563000000E+0,
+    3.065817000000E+0,	3.140938000000E+0,	3.221264000000E+0,	3.307154000000E+0,	3.398991000000E+0,
+    3.497183000000E+0,	3.602167000000E+0,	3.714406000000E+0,	3.834397000000E+0,	3.962667000000E+0,
+    4.099781000000E+0,	4.246338000000E+0,	4.402979000000E+0,	4.570388000000E+0,	4.749291000000E+0,
+    4.940466000000E+0,	5.144740000000E+0,	5.362995000000E+0,	5.596170000000E+0,	5.845267000000E+0,
+    6.111355000000E+0
+}; // real part of the observed data
+double custom3_z2[141] = {
+    6.275211000000E-1,	5.591152000000E-1,	4.981325000000E-1,	4.437641000000E-1,	3.952890000000E-1,
+    3.520643000000E-1,	3.135169000000E-1,	2.791359000000E-1,	2.484655000000E-1,	2.210994000000E-1,
+    1.966752000000E-1,	1.748694000000E-1,	1.553935000000E-1,	1.379899000000E-1,	1.224287000000E-1,
+    1.085043000000E-1,	9.603317000000E-2,	8.485103000000E-2,	7.481084000000E-2,	6.578088000000E-2,
+    5.764295000000E-2,	5.029085000000E-2,	4.362899000000E-2,	3.757111000000E-2,	3.203920000000E-2,
+    2.696245000000E-2,	2.227635000000E-2,	1.792185000000E-2,	1.384464000000E-2,	9.994404000000E-3,
+    6.324259000000E-3,	2.790125000000E-3,	-6.497850000000E-4,	-4.035476000000E-3,	-7.405632000000E-3,
+    -1.079806000000E-2,	-1.425011000000E-2,	-1.779908000000E-2,	-2.148257000000E-2,	-2.533891000000E-2,
+    -2.940746000000E-2,	-3.372898000000E-2,	-3.834596000000E-2,	-4.330290000000E-2,	-4.864665000000E-2,
+    -5.442659000000E-2,	-6.069486000000E-2,	-6.750651000000E-2,	-7.491950000000E-2,	-8.299463000000E-2,
+    -9.179531000000E-2,	-1.013870000000E-1,	-1.118366000000E-1,	-1.232111000000E-1,	-1.355760000000E-1,
+    -1.489931000000E-1,	-1.635174000000E-1,	-1.791935000000E-1,	-1.960502000000E-1,	-2.140947000000E-1,
+    -2.333052000000E-1,	-2.536227000000E-1,	-2.749414000000E-1,	-2.970997000000E-1,	-3.198710000000E-1,
+    -3.429569000000E-1,	-3.659845000000E-1,	-3.885091000000E-1,	-4.100250000000E-1,	-4.299860000000E-1,
+    -4.478353000000E-1,	-4.630440000000E-1,	-4.751546000000E-1,	-4.838234000000E-1,	-4.888560000000E-1,
+    -4.902289000000E-1,	-4.880947000000E-1,	-4.827680000000E-1,	-4.746958000000E-1,	-4.644181000000E-1,
+    -4.525243000000E-1,	-4.396117000000E-1,	-4.262515000000E-1,	-4.129641000000E-1,	-4.002033000000E-1,
+    -3.883507000000E-1,	-3.777162000000E-1,	-3.685430000000E-1,	-3.610163000000E-1,	-3.552729000000E-1,
+    -3.514104000000E-1,	-3.494968000000E-1,	-3.495785000000E-1,	-3.516870000000E-1,	-3.558451000000E-1,
+    -3.620714000000E-1,	-3.703838000000E-1,	-3.808031000000E-1,	-3.933548000000E-1,	-4.080710000000E-1,
+    -4.249918000000E-1,	-4.441667000000E-1,	-4.656547000000E-1,	-4.895260000000E-1,	-5.158614000000E-1,
+    -5.447541000000E-1,	-5.763090000000E-1,	-6.106441000000E-1,	-6.478901000000E-1,	-6.881917000000E-1,
+    -7.317075000000E-1,	-7.786110000000E-1,	-8.290910000000E-1,	-8.833522000000E-1,	-9.416159000000E-1,
+    -1.004121000000E+0,	-1.071125000000E+0,	-1.142905000000E+0,	-1.219757000000E+0,	-1.302000000000E+0,
+    -1.389975000000E+0,	-1.484046000000E+0,	-1.584604000000E+0,	-1.692065000000E+0,	-1.806875000000E+0,
+    -1.929508000000E+0,	-2.060471000000E+0,	-2.200305000000E+0,	-2.349586000000E+0,	-2.508928000000E+0,
+    -2.678985000000E+0,	-2.860454000000E+0,	-3.054077000000E+0,	-3.260644000000E+0,	-3.480998000000E+0,
+    -3.716033000000E+0,	-3.966704000000E+0,	-4.234025000000E+0,	-4.519076000000E+0,	-4.823005000000E+0,
+    -5.147035000000E+0
+}; // imaginary part of the observed data
+double custom3_f[141] = {
+    1.000000000000E+4,	8.912509000000E+3,	7.943282000000E+3,	7.079458000000E+3,	6.309573000000E+3,
+    5.623413000000E+3,	5.011872000000E+3,	4.466836000000E+3,	3.981072000000E+3,	3.548134000000E+3,
+    3.162278000000E+3,	2.818383000000E+3,	2.511886000000E+3,	2.238721000000E+3,	1.995262000000E+3,
+    1.778279000000E+3,	1.584893000000E+3,	1.412538000000E+3,	1.258925000000E+3,	1.122018000000E+3,
+    1.000000000000E+3,	8.912509000000E+2,	7.943282000000E+2,	7.079458000000E+2,	6.309573000000E+2,
+    5.623413000000E+2,	5.011872000000E+2,	4.466836000000E+2,	3.981072000000E+2,	3.548134000000E+2,
+    3.162278000000E+2,	2.818383000000E+2,	2.511886000000E+2,	2.238721000000E+2,	1.995262000000E+2,
+    1.778279000000E+2,	1.584893000000E+2,	1.412538000000E+2,	1.258925000000E+2,	1.122018000000E+2,
+    1.000000000000E+2,	8.912509000000E+1,	7.943282000000E+1,	7.079458000000E+1,	6.309573000000E+1,
+    5.623413000000E+1,	5.011872000000E+1,	4.466836000000E+1,	3.981072000000E+1,	3.548134000000E+1,
+    3.162278000000E+1,	2.818383000000E+1,	2.511886000000E+1,	2.238721000000E+1,	1.995262000000E+1,
+    1.778279000000E+1,	1.584893000000E+1,	1.412538000000E+1,	1.258925000000E+1,	1.122018000000E+1,
+    1.000000000000E+1,	8.912509000000E+0,	7.943282000000E+0,	7.079458000000E+0,	6.309573000000E+0,
+    5.623413000000E+0,	5.011872000000E+0,	4.466836000000E+0,	3.981072000000E+0,	3.548134000000E+0,
+    3.162278000000E+0,	2.818383000000E+0,	2.511886000000E+0,	2.238721000000E+0,	1.995262000000E+0,
+    1.778279000000E+0,	1.584893000000E+0,	1.412538000000E+0,	1.258925000000E+0,	1.122018000000E+0,
+    1.000000000000E+0,	8.912509000000E-1,	7.943282000000E-1,	7.079458000000E-1,	6.309573000000E-1,
+    5.623413000000E-1,	5.011872000000E-1,	4.466836000000E-1,	3.981072000000E-1,	3.548134000000E-1,
+    3.162278000000E-1,	2.818383000000E-1,	2.511886000000E-1,	2.238721000000E-1,	1.995262000000E-1,
+    1.778279000000E-1,	1.584893000000E-1,	1.412538000000E-1,	1.258925000000E-1,	1.122018000000E-1,
+    1.000000000000E-1,	8.912509000000E-2,	7.943282000000E-2,	7.079458000000E-2,	6.309573000000E-2,
+    5.623413000000E-2,	5.011872000000E-2,	4.466836000000E-2,	3.981072000000E-2,	3.548134000000E-2,
+    3.162278000000E-2,	2.818383000000E-2,	2.511886000000E-2,	2.238721000000E-2,	1.995262000000E-2,
+    1.778279000000E-2,	1.584893000000E-2,	1.412538000000E-2,	1.258925000000E-2,	1.122018000000E-2,
+    1.000000000000E-2,	8.912509000000E-3,	7.943282000000E-3,	7.079458000000E-3,	6.309573000000E-3,
+    5.623413000000E-3,	5.011872000000E-3,	4.466836000000E-3,	3.981072000000E-3,	3.548134000000E-3,
+    3.162278000000E-3,	2.818383000000E-3,	2.511886000000E-3,	2.238721000000E-3,	1.995262000000E-3,
+    1.778279000000E-3,	1.584893000000E-3,	1.412538000000E-3,	1.258925000000E-3,	1.122018000000E-3,
+    1.000000000000E-3
+}; // frequency data
+void custom3(double *p, double *y, int m, int n, void *data)
+{
+    // PREMISS: the 1st half of y is real part and the other is imaginary part of the observed data
+    //          y = { z1[0], z1[1], ..., z1[n/2 - 1], z2[0], z2[1], ..., z2[n/2 - 1] }
+
+    register int i;
+    int Ns = (int)(n / 2);
+
+    double Ls = p[0];
+    double Rs = p[1];
+    double R1 = p[2];
+    double Q1y = p[3];
+    double Q1a = p[4];
+    double R2 = p[5];
+    double W = p[6];
+    double Q2y = p[7];
+    double Q2a = p[8];    
+
+    complex <double> s;
+    complex <double> z;
+
+    double *ff = (double*)data;
+    for (i = 0; i < Ns; ++i, ff++)
+    {
+        double f = *ff;
+        s = { 0.0, TwoPi * f }; // s = j * w, where angular frequency w = 2 * pi * f
+        z = Rs + Ls * s + R1 / (R1 * Q1y * pow(s, Q1a) + 1.0) + (R2 * sqrt(s) * W + 1.0) / (W * R2 * Q2y * pow(s, Q2a) * sqrt(s) + W * sqrt(s) + Q2y * pow(s, Q2a));
+
+        y[i] = real(z);
+        y[Ns + i] = imag(z);
+    }
+}
+void custom3prime(double *p, double *jac, int m, int n, void *data)
+{
+    register int i;
+    int Ns = (int)(n / 2);
+
+    double Ls = p[0];
+    double Rs = p[1];
+    double R1 = p[2];
+    double Q1y = p[3];
+    double Q1a = p[4];
+    double R2 = p[5];
+    double W = p[6];
+    double Q2y = p[7];
+    double Q2a = p[8];
+
+    double f;
+    complex <double> s;
+    complex <double> jac0, jac1, jac2, jac3, jac4, jac5, jac6, jac7, jac8, jac9;
+
+    double *ff = (double*)data;
+    for (i = 0; i < Ns; ++i, ff++)
+    {
+        f = *ff;
+        s = { 0.0, TwoPi * f }; // s = j * w, where angular frequency w = 2 * pi * f
+        
+        jac0 = s;
+        jac1 = 1.0;
+        jac2 = 1.0 / pow(R1 * Q1y * pow(s, Q1a) + 1.0, 2);
+        jac3 = -(R1 * R1 * pow(s, Q1a)) / pow(R1 * Q1y * pow(s, Q1a) + 1.0, 2);
+        jac4 = -(R1 * R1 * Q1y * pow(s, Q1a) * log(s)) / pow(R1 * Q1y * pow(s, Q1a) + 1.0, 2);
+        jac5 = (s * W * W) / pow(R2 * W * Q2y * pow(s, Q2a) * sqrt(s) + Q2y * pow(s, Q2a) + sqrt(s) * W, 2);
+        jac6 = -sqrt(s) / pow(R2 * W * Q2y * pow(s, Q2a) * sqrt(s) + Q2y * pow(s, Q2a) + sqrt(s) * W, 2);
+        jac7 = -(pow(s, Q2a) * pow(R2 * sqrt(s) * W + 1.0, 2)) / pow(R2 * W * Q2y * pow(s, Q2a) * sqrt(s) + Q2y * pow(s, Q2a) + sqrt(s) * W, 2);
+        jac8 = -(Q2y * pow(s, Q2a) * log(s) * pow(R2 * sqrt(s) * W + 1.0, 2)) / pow(R2 * W * Q2y * pow(s, Q2a) * sqrt(s) + Q2y * pow(s, Q2a) + sqrt(s) * W, 2);
+
+        jac[m*i] = real(jac0);
+        jac[m*i + 1] = real(jac1);
+        jac[m*i + 2] = real(jac2);
+        jac[m*i + 3] = real(jac3);
+        jac[m*i + 4] = real(jac4);
+        jac[m*i + 5] = real(jac5);
+        jac[m*i + 6] = real(jac6);
+        jac[m*i + 7] = real(jac7);
+        jac[m*i + 8] = real(jac8);
+        jac[m*(Ns + i)] = imag(jac0);
+        jac[m*(Ns + i) + 1] = imag(jac1);
+        jac[m*(Ns + i) + 2] = imag(jac2);
+        jac[m*(Ns + i) + 3] = imag(jac3);
+        jac[m*(Ns + i) + 4] = imag(jac4);
+        jac[m*(Ns + i) + 5] = imag(jac5);
+        jac[m*(Ns + i) + 6] = imag(jac6);
+        jac[m*(Ns + i) + 7] = imag(jac7);
+        jac[m*(Ns + i) + 8] = imag(jac8);
     }
 }
 
@@ -1050,6 +1267,65 @@ int main()
     printf("\nExpected: ");
     for (i = 0; i < m; ++i)
         printf("%12.7g ", custom2_p[i]);
+    printf("\n\nMinimization info:\n");
+    for (i = 0; i < LM_INFO_SZ; ++i)
+        printf("%g ", info[i]);
+
+    printf("\n");
+    printf("\n");
+    printf("-----------------------------------------\n");
+    printf("\n");
+
+    //
+    // 9. Custom3, Ls-Rs-R1|Q1-(R2-W)|Q2 - Complex non-linear Regression
+    //
+
+    m = 9; n = 141;
+
+    double custom3_y[282];
+    memcpy(custom3_y, custom3_z1, n * sizeof(double));
+    memcpy(&custom3_y[n], custom3_z2, n * sizeof(double));
+
+    lb[0] = 1e-10; lb[1] = 1e-10; lb[2] = 1e-10; lb[3] = 1e-10; lb[4] = 1e-10; // set lower bound
+    lb[5] = 1e-10; lb[6] = 1e-10; lb[7] = 1e-10; lb[8] = 1e-10;
+
+    //
+    // 9.1 analytic Jacobian
+    //
+    p[0] = 2e-5; p[1] = 1.1; p[2] = 0.9; p[3] = 0.09; p[4] = 0.88;
+    p[5] = 0.2; p[6] = 1.2; p[7] = 2.1; p[8] = 0.6; // initial values 
+    ret = dlevmar_bc_der(custom3, custom3prime, p, custom3_y, m, 2 * n, lb, NULL, NULL, maxiteration, opts, info, NULL, NULL, custom3_f);
+
+    printf("Results for Ls-Rs-R1|Q1-(R2-W)|Q2 - with analytic Jacobian\n");
+    printf("Levenberg-Marquardt returned %d in %g iter, reason %g\nSolution: ", ret, info[5], info[6]);
+    for (i = 0; i < m; ++i)
+        printf("%12.7g ", p[i]);
+    printf("\nExpected: ");
+    for (i = 0; i < m; ++i)
+        printf("%12.7g ", custom3_p[i]);
+    printf("\n\nMinimization info:\n");
+    for (i = 0; i < LM_INFO_SZ; ++i)
+        printf("%g ", info[i]);
+
+    printf("\n");
+    printf("\n");
+    printf("-----------------------------------------\n");
+    printf("\n");
+
+    //
+    // 9.2 finite difference approximated Jacobian
+    //
+    p[0] = 2e-5; p[1] = 1.1; p[2] = 0.9; p[3] = 0.09; p[4] = 0.88;
+    p[5] = 0.2; p[6] = 1.2; p[7] = 2.1; p[8] = 0.6; // initial values 
+    ret = dlevmar_bc_dif(custom3, p, custom3_y, m, 2 * n, lb, NULL, NULL, maxiteration, opts, info, NULL, NULL, custom3_f);
+
+    printf("Results for Ls-Rs-R1|Q1-(R2-W)|Q2 - with finite difference approximated Jacobian \n");
+    printf("Levenberg-Marquardt returned %d in %g iter, reason %g\nSolution: ", ret, info[5], info[6]);
+    for (i = 0; i < m; ++i)
+        printf("%12.7g ", p[i]);
+    printf("\nExpected: ");
+    for (i = 0; i < m; ++i)
+        printf("%12.7g ", custom3_p[i]);
     printf("\n\nMinimization info:\n");
     for (i = 0; i < LM_INFO_SZ; ++i)
         printf("%g ", info[i]);
