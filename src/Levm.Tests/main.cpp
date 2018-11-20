@@ -28,7 +28,7 @@ void rosenbrock(double *p, double *x, int m, int n, void *data)
     for (i = 0; i < n; ++i)
         x[i] = ((1.0 - p[0]) * (1.0 - p[0]) + ROSD * (p[1] - p[0] * p[0]) * (p[1] - p[0] * p[0]));
 }
-void rosenbrockprime(double *p, double *jac, int m, int n, void *data)
+void rosenbrockPrime(double *p, double *jac, int m, int n, void *data)
 {
 	register int i, j;
 
@@ -63,7 +63,7 @@ void norris(double *p, double *y, int m, int n, void *data)
 	for (i = 0; i < n; ++i)
 		y[i] = p[0] + p[1] * norris_x[i];
 }
-void norrisprime(double *p, double *jac, int m, int n, void *data)
+void norrisPrime(double *p, double *jac, int m, int n, void *data)
 {
 	register int i, j;
 
@@ -339,7 +339,7 @@ void randle(double *p, double *y, int m, int n, void *data)
         y[Ns + i] = imag(z);
     }
 }
-void randleprime(double *p, double *jac, int m, int n, void *data)
+void randlePrime(double *p, double *jac, int m, int n, void *data)
 {
     register int i;
     int Ns = (int)(n / 2);
@@ -535,7 +535,7 @@ void custom1(double *p, double *y, int m, int n, void *data)
         y[Ns + i] = imag(z);
     }
 }
-void custom1prime(double *p, double *jac, int m, int n, void *data)
+void custom1Prime(double *p, double *jac, int m, int n, void *data)
 {
     register int i;
     int Ns = (int)(n / 2);
@@ -683,7 +683,7 @@ void custom2(double *p, double *y, int m, int n, void *data)
         y[Ns + i] = imag(z);
     }
 }
-void custom2prime(double *p, double *jac, int m, int n, void *data)
+void custom2Prime(double *p, double *jac, int m, int n, void *data)
 {
     register int i;
     int Ns = (int)(n / 2);
@@ -876,7 +876,7 @@ void custom3(double *p, double *y, int m, int n, void *data)
         y[Ns + i] = imag(z);
     }
 }
-void custom3prime(double *p, double *jac, int m, int n, void *data)
+void custom3Prime(double *p, double *jac, int m, int n, void *data)
 {
     register int i;
     int Ns = (int)(n / 2);
@@ -934,6 +934,33 @@ void custom3prime(double *p, double *jac, int m, int n, void *data)
 
 #pragma endregion
 
+#pragma region Private Methods
+
+void printOutput(char* function, int ret, double* info, int m, double* pSolution, double* pExpected)
+{
+    register int i;
+
+    printf("Results for %s\n", function);
+    printf("Levenberg-Marquardt returned %d in %g iter, reason %g\nSolution: ", ret, info[5], info[6]);
+    for (i = 0; i < m; ++i)
+        printf("%12.7g ", pSolution[i]);
+    printf("\nExpected: ");
+    for (i = 0; i < m; ++i)
+        printf("%12.7g ", pExpected[i]);
+    printf("\n\nMinimization info:\n");
+    for (i = 0; i < LM_INFO_SZ; ++i)
+        printf("%g ", info[i]);
+
+    printf("\n");
+    printf("\n");
+    printf("-----------------------------------------\n");
+    printf("\n");
+}
+
+#pragma endregion
+
+// Run this only on x86, because of levmar.lib was compiled on x86 without LAPACK.
+
 int main()
 {
 	int i, ret;
@@ -957,6 +984,8 @@ int main()
 
     int maxiteration = 1000; // max iteration
 
+    char functionName[200] = "Rosenberg - with analytic jacobian";
+
     //
 	// 1. Rosenbrock
     //
@@ -968,23 +997,9 @@ int main()
     // 6.1 analytic Jacobian
     //
     p[0] = -1.2; p[1] = 1.0;
-    ret = dlevmar_der(rosenbrock, rosenbrockprime, p, x, m, n, 10 * maxiteration, opts, info, NULL, NULL, NULL);
+    ret = dlevmar_der(rosenbrock, rosenbrockPrime, p, x, m, n, 10 * maxiteration, opts, info, NULL, NULL, NULL);
 
-	printf("Results for Rosenberg -  with analytic jacobian\n");
-	printf("Levenberg-Marquardt returned %d in %g iter, reason %g\nSolution: ", ret, info[5], info[6]);
-	for (i = 0; i < m; ++i)
-		printf("%12.7g ", p[i]);
-    printf("\nExpected: ");
-    for (i = 0; i < m; ++i)
-        printf("%12.7g ", rosenbrock_p[i]);
-	printf("\n\nMinimization info:\n");
-	for (i = 0; i < LM_INFO_SZ; ++i)
-		printf("%g ", info[i]);
-
-	printf("\n");
-	printf("\n");
-	printf("-----------------------------------------\n");
-	printf("\n");
+    printOutput(functionName, ret, info, m, p, rosenbrock_p);
 
     //
     // 6.2 finite difference approximated Jacobian
@@ -992,22 +1007,9 @@ int main()
     p[0] = 0.8; p[1] = 0.64;
     ret = dlevmar_dif(rosenbrock, p, x, m, n, 10 * maxiteration, opts, info, NULL, NULL, NULL);
 
-    printf("Results for Rosenberg - with finite difference approximated Jacobian \n");
-    printf("Levenberg-Marquardt returned %d in %g iter, reason %g\nSolution: ", ret, info[5], info[6]);
-    for (i = 0; i < m; ++i)
-        printf("%12.7g ", p[i]);
-    printf("\nExpected: ");
-    for (i = 0; i < m; ++i)
-        printf("%12.7g ", rosenbrock_p[i]);
-    printf("\n\nMinimization info:\n");
-    for (i = 0; i < LM_INFO_SZ; ++i)
-        printf("%g ", info[i]);
-
-    printf("\n");
-    printf("\n");
-    printf("-----------------------------------------\n");
-    printf("\n");
-
+    strcpy_s(functionName, 57, "Rosenberg - with finite difference approximated Jacobian");
+    printOutput(functionName, ret, info, m, p, rosenbrock_p);
+    
     //
 	// 2. Norris - Linear Regression
     //
@@ -1015,23 +1017,10 @@ int main()
 	m = 2; n = 36;
 	p[0] = 1.0; p[1] = 1.0;
 	
-	ret = dlevmar_der(norris, norrisprime, p, norris_y, m, n, maxiteration, opts, info, NULL, NULL, NULL);
+	ret = dlevmar_der(norris, norrisPrime, p, norris_y, m, n, maxiteration, opts, info, NULL, NULL, NULL);
 
-	printf("Results for Norris - with analytic jacobian\n");
-	printf("Levenberg-Marquardt returned %d in %g iter, reason %g\nSolution: ", ret, info[5], info[6]);
-	for (i = 0; i < m; ++i)
-		printf("%12.7g ", p[i]);
-    printf("\nExpected: ");
-    for (i = 0; i < m; ++i)
-        printf("%12.7g ", norris_p[i]);
-	printf("\n\nMinimization info:\n");
-	for (i = 0; i < LM_INFO_SZ; ++i)
-		printf("%g ", info[i]);
-	
-	printf("\n");
-	printf("\n");
-	printf("-----------------------------------------\n");
-	printf("\n");
+    strcpy_s(functionName, 32, "Norris - with analytic jacobian");
+    printOutput(functionName, ret, info, m, p, norris_p);
 
 	//
     // 3. Lanczos1 - Non-linear Regression
@@ -1042,22 +1031,9 @@ int main()
 
 	ret = dlevmar_dif(lanczos1, p, lanczos1_y, m, n, maxiteration, opts, info, NULL, NULL, lanczos1_x);
 
-	printf("Results for Lanczos1\n");
-	printf("Levenberg-Marquardt returned %d in %g iter, reason %g\nSolution: ", ret, info[5], info[6]);
-	for (i = 0; i < m; ++i)
-		printf("%12.7g ", p[i]);
-    printf("\nExpected: ");
-    for (i = 0; i < m; ++i)
-        printf("%12.7g ", lanczos1_p[i]);
-	printf("\n\nMinimization info:\n");
-	for (i = 0; i < LM_INFO_SZ; ++i)
-		printf("%g ", info[i]);
-	
-	printf("\n");
-	printf("\n");
-	printf("-----------------------------------------\n");
-	printf("\n");
-
+    strcpy_s(functionName, 56, "Lanczos1 - with finite difference approximated Jacobian");
+    printOutput(functionName, ret, info, m, p, lanczos1_p);
+    
     //
 	// 4. Thurber - Non-linear Regression
     //
@@ -1067,22 +1043,9 @@ int main()
 
 	ret = dlevmar_dif(thurber, p, thurber_y, m, n, maxiteration, opts, info, NULL, NULL, thurber_x);
 
-	printf("Results for Thurber\n");
-	printf("Levenberg-Marquardt returned %d in %g iter, reason %g\nSolution: ", ret, info[5], info[6]);
-	for (i = 0; i < m; ++i)
-		printf("%12.7g ", p[i]);
-    printf("\nExpected: ");
-    for (i = 0; i < m; ++i)
-        printf("%12.7g ", thurber_p[i]);
-	printf("\n\nMinimization info:\n");
-	for (i = 0; i < LM_INFO_SZ; ++i)
-		printf("%g ", info[i]);
-
-    printf("\n");
-    printf("\n");
-    printf("-----------------------------------------\n");
-    printf("\n");
-
+    strcpy_s(functionName, 55, "Thurber - with finite difference approximated Jacobian");
+    printOutput(functionName, ret, info, m, p, thurber_p);
+    
     //
     // 5. Rat43 - Non-linear Regression
     //
@@ -1092,21 +1055,8 @@ int main()
         
     ret = dlevmar_dif(rat43, p, rat43_y, m, n, maxiteration, opts, info, NULL, NULL, rat43_x);
 
-    printf("Results for Rat43\n");
-    printf("Levenberg-Marquardt returned %d in %g iter, reason %g\nSolution: ", ret, info[5], info[6]);
-    for (i = 0; i < m; ++i)
-        printf("%12.7g ", p[i]);
-    printf("\nExpected: ");
-    for (i = 0; i < m; ++i)
-        printf("%12.7g ", rat43_p[i]);
-    printf("\n\nMinimization info:\n");
-    for (i = 0; i < LM_INFO_SZ; ++i)
-        printf("%g ", info[i]);
-
-    printf("\n");
-    printf("\n");
-    printf("-----------------------------------------\n");
-    printf("\n");
+    strcpy_s(functionName, 53, "Rat43 - with finite difference approximated Jacobian");
+    printOutput(functionName, ret, info, m, p, rat43_p);
 
     //
     // 6. Randle - Complex non-linear Regression
@@ -1124,23 +1074,10 @@ int main()
     // 6.1 analytic Jacobian
     //
     p[0] = 10.0; p[1] = 10.0; p[2] = 1e-6; // initial values   
-    ret = dlevmar_bc_der(randle, randleprime, p, randle_y, m, 2 * n, lb, NULL, NULL, maxiteration, opts, info, NULL, NULL, randle_f);
+    ret = dlevmar_bc_der(randle, randlePrime, p, randle_y, m, 2 * n, lb, NULL, NULL, maxiteration, opts, info, NULL, NULL, randle_f);
 
-    printf("Results for Randle - with analytic Jacobian\n");
-    printf("Levenberg-Marquardt returned %d in %g iter, reason %g\nSolution: ", ret, info[5], info[6]);
-    for (i = 0; i < m; ++i)
-        printf("%12.7g ", p[i]);
-    printf("\nExpected: ");
-    for (i = 0; i < m; ++i)
-        printf("%12.7g ", randle_p[i]);
-    printf("\n\nMinimization info:\n");
-    for (i = 0; i < LM_INFO_SZ; ++i)
-        printf("%g ", info[i]);
-
-    printf("\n");
-    printf("\n");
-    printf("-----------------------------------------\n");
-    printf("\n");
+    strcpy_s(functionName, 32, "Randle - with analytic Jacobian");
+    printOutput(functionName, ret, info, m, p, randle_p);
 
     //
     // 6.2 finite difference approximated Jacobian
@@ -1148,21 +1085,8 @@ int main()
     p[0] = 10.0; p[1] = 10.0; p[2] = 1.0e-6; // initial values 
     ret = dlevmar_bc_dif(randle, p, randle_y, m, 2 * n, lb, NULL, NULL, maxiteration, opts, info, NULL, NULL, randle_f);
 
-    printf("Results for Randle - with finite difference approximated Jacobian \n");
-    printf("Levenberg-Marquardt returned %d in %g iter, reason %g\nSolution: ", ret, info[5], info[6]);
-    for (i = 0; i < m; ++i)
-        printf("%12.7g ", p[i]);
-    printf("\nExpected: ");
-    for (i = 0; i < m; ++i)
-        printf("%12.7g ", randle_p[i]);
-    printf("\n\nMinimization info:\n");
-    for (i = 0; i < LM_INFO_SZ; ++i)
-        printf("%g ", info[i]);
-
-    printf("\n");
-    printf("\n");
-    printf("-----------------------------------------\n");
-    printf("\n");
+    strcpy_s(functionName, 54, "Randle - with finite difference approximated Jacobian");
+    printOutput(functionName, ret, info, m, p, randle_p);
 
     //
     // 7. Custom1, L-Rs-Rp|Q - Complex non-linear Regression
@@ -1180,45 +1104,19 @@ int main()
     // 7.1 analytic Jacobian
     //
     p[0] = 1e-6; p[1] = 0.181; p[2] = 7.981; p[3] = 0.032; p[4] = 0.666; // initial values  
-    ret = dlevmar_bc_der(custom1, custom1prime, p, custom1_y, m, 2 * n, lb, NULL, NULL, maxiteration, opts, info, NULL, NULL, custom1_f);
+    ret = dlevmar_bc_der(custom1, custom1Prime, p, custom1_y, m, 2 * n, lb, NULL, NULL, maxiteration, opts, info, NULL, NULL, custom1_f);
 
-    printf("Results for L-Rs-Rp|Q - with analytic Jacobian\n");
-    printf("Levenberg-Marquardt returned %d in %g iter, reason %g\nSolution: ", ret, info[5], info[6]);
-    for (i = 0; i < m; ++i)
-        printf("%12.7g ", p[i]);
-    printf("\nExpected: ");
-    for (i = 0; i < m; ++i)
-        printf("%12.7g ", custom1_p[i]);
-    printf("\n\nMinimization info:\n");
-    for (i = 0; i < LM_INFO_SZ; ++i)
-        printf("%g ", info[i]);
-
-    printf("\n");
-    printf("\n");
-    printf("-----------------------------------------\n");
-    printf("\n");
-
+    strcpy_s(functionName, 35, "L-Rs-Rp|Q - with analytic Jacobian");
+    printOutput(functionName, ret, info, m, p, custom1_p);
+    
     //
     // 7.2 finite difference approximated Jacobian
     //
     p[0] = 1e-6; p[1] = 0.181; p[2] = 7.981; p[3] = 0.032; p[4] = 0.666; // initial values   
     ret = dlevmar_bc_dif(custom1, p, custom1_y, m, 2 * n, lb, NULL, NULL, maxiteration, opts, info, NULL, NULL, custom1_f);
 
-    printf("Results for L-Rs-Rp|Q - with finite difference approximated Jacobian \n");
-    printf("Levenberg-Marquardt returned %d in %g iter, reason %g\nSolution: ", ret, info[5], info[6]);
-    for (i = 0; i < m; ++i)
-        printf("%12.7g ", p[i]);
-    printf("\nExpected: ");
-    for (i = 0; i < m; ++i)
-        printf("%12.7g ", custom1_p[i]);
-    printf("\n\nMinimization info:\n");
-    for (i = 0; i < LM_INFO_SZ; ++i)
-        printf("%g ", info[i]);
-
-    printf("\n");
-    printf("\n");
-    printf("-----------------------------------------\n");
-    printf("\n");
+    strcpy_s(functionName, 57, "L-Rs-Rp|Q - with finite difference approximated Jacobian");
+    printOutput(functionName, ret, info, m, p, custom1_p);
 
     //
     // 8. Custom2, L-Rs-Rp|Q-W - Complex non-linear Regression
@@ -1236,23 +1134,10 @@ int main()
     // 8.1 analytic Jacobian
     //
     p[0] = 2e-3; p[1] = 0.08; p[2] = 0.210; p[3] = 2.272; p[4] = 0.7; p[5] = 1.4; // initial values 
-    ret = dlevmar_bc_der(custom2, custom2prime, p, custom2_y, m, 2 * n, lb, NULL, NULL, maxiteration, opts, info, NULL, NULL, custom2_f);
+    ret = dlevmar_bc_der(custom2, custom2Prime, p, custom2_y, m, 2 * n, lb, NULL, NULL, maxiteration, opts, info, NULL, NULL, custom2_f);
 
-    printf("Results for L-Rs-Rp|Q-W - with analytic Jacobian\n");
-    printf("Levenberg-Marquardt returned %d in %g iter, reason %g\nSolution: ", ret, info[5], info[6]);
-    for (i = 0; i < m; ++i)
-        printf("%12.7g ", p[i]);
-    printf("\nExpected: ");
-    for (i = 0; i < m; ++i)
-        printf("%12.7g ", custom2_p[i]);
-    printf("\n\nMinimization info:\n");
-    for (i = 0; i < LM_INFO_SZ; ++i)
-        printf("%g ", info[i]);
-
-    printf("\n");
-    printf("\n");
-    printf("-----------------------------------------\n");
-    printf("\n");
+    strcpy_s(functionName, 37, "L-Rs-Rp|Q-W - with analytic Jacobian");
+    printOutput(functionName, ret, info, m, p, custom2_p);
 
     //
     // 8.2 finite difference approximated Jacobian
@@ -1260,21 +1145,8 @@ int main()
     p[0] = 2e-3; p[1] = 0.08; p[2] = 0.210; p[3] = 2.272; p[4] = 0.7; p[5] = 1.4; // initial values
     ret = dlevmar_bc_dif(custom2, p, custom2_y, m, 2 * n, lb, NULL, NULL, maxiteration, opts, info, NULL, NULL, custom2_f);
 
-    printf("Results for L-Rs-Rp|Q-W - with finite difference approximated Jacobian \n");
-    printf("Levenberg-Marquardt returned %d in %g iter, reason %g\nSolution: ", ret, info[5], info[6]);
-    for (i = 0; i < m; ++i)
-        printf("%12.7g ", p[i]);
-    printf("\nExpected: ");
-    for (i = 0; i < m; ++i)
-        printf("%12.7g ", custom2_p[i]);
-    printf("\n\nMinimization info:\n");
-    for (i = 0; i < LM_INFO_SZ; ++i)
-        printf("%g ", info[i]);
-
-    printf("\n");
-    printf("\n");
-    printf("-----------------------------------------\n");
-    printf("\n");
+    strcpy_s(functionName, 59, "L-Rs-Rp|Q-W - with finite difference approximated Jacobian");
+    printOutput(functionName, ret, info, m, p, custom2_p);
 
     //
     // 9. Custom3, Ls-Rs-R1|Q1-(R2-W)|Q2 - Complex non-linear Regression
@@ -1294,23 +1166,10 @@ int main()
     //
     p[0] = 2e-5; p[1] = 1.1; p[2] = 0.9; p[3] = 0.09; p[4] = 0.88;
     p[5] = 0.2; p[6] = 1.2; p[7] = 2.1; p[8] = 0.6; // initial values 
-    ret = dlevmar_bc_der(custom3, custom3prime, p, custom3_y, m, 2 * n, lb, NULL, NULL, maxiteration, opts, info, NULL, NULL, custom3_f);
+    ret = dlevmar_bc_der(custom3, custom3Prime, p, custom3_y, m, 2 * n, lb, NULL, NULL, maxiteration, opts, info, NULL, NULL, custom3_f);
 
-    printf("Results for Ls-Rs-R1|Q1-(R2-W)|Q2 - with analytic Jacobian\n");
-    printf("Levenberg-Marquardt returned %d in %g iter, reason %g\nSolution: ", ret, info[5], info[6]);
-    for (i = 0; i < m; ++i)
-        printf("%12.7g ", p[i]);
-    printf("\nExpected: ");
-    for (i = 0; i < m; ++i)
-        printf("%12.7g ", custom3_p[i]);
-    printf("\n\nMinimization info:\n");
-    for (i = 0; i < LM_INFO_SZ; ++i)
-        printf("%g ", info[i]);
-
-    printf("\n");
-    printf("\n");
-    printf("-----------------------------------------\n");
-    printf("\n");
+    strcpy_s(functionName, 47, "Ls-Rs-R1|Q1-(R2-W)|Q2 - with analytic Jacobian");
+    printOutput(functionName, ret, info, m, p, custom3_p);
 
     //
     // 9.2 finite difference approximated Jacobian
@@ -1319,21 +1178,8 @@ int main()
     p[5] = 0.2; p[6] = 1.2; p[7] = 2.1; p[8] = 0.6; // initial values 
     ret = dlevmar_bc_dif(custom3, p, custom3_y, m, 2 * n, lb, NULL, NULL, maxiteration, opts, info, NULL, NULL, custom3_f);
 
-    printf("Results for Ls-Rs-R1|Q1-(R2-W)|Q2 - with finite difference approximated Jacobian \n");
-    printf("Levenberg-Marquardt returned %d in %g iter, reason %g\nSolution: ", ret, info[5], info[6]);
-    for (i = 0; i < m; ++i)
-        printf("%12.7g ", p[i]);
-    printf("\nExpected: ");
-    for (i = 0; i < m; ++i)
-        printf("%12.7g ", custom3_p[i]);
-    printf("\n\nMinimization info:\n");
-    for (i = 0; i < LM_INFO_SZ; ++i)
-        printf("%g ", info[i]);
-
-    printf("\n");
-    printf("\n");
-    printf("-----------------------------------------\n");
-    printf("\n");
-
+    strcpy_s(functionName, 69, "Ls-Rs-R1|Q1-(R2-W)|Q2 - with finite difference approximated Jacobian");
+    printOutput(functionName, ret, info, m, p, custom3_p);
+    
 	return 0;
 }
