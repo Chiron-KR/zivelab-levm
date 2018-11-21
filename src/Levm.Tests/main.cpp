@@ -738,15 +738,15 @@ void custom2Prime(double *p, double *jac, int m, int n, void *data)
 // Model Expression = L-Rs-Rp|Q-W
 // Z = Rs + Ls*s + 1/(1/R1 + Q1y*s^Q1a) + 1/(1/(R2 + 1/(W*sqrt(s))) + Q2y*s^Q2a)
 // Parameters = { L, Rs, R1, Q1y, Q1a, R2, W, Q2y, Q2a}
-//dZ/dLs = s
-//dZ/dRs = 1
-//dZ/dR1 = 1 / (R1 ^ 2 * (1 / R1 + Q1y * s^Q1a) ^ 2)
-//dZ/dQ1y = -s ^ Q1a / (1 / R1 + Q1y * s^Q1a) ^ 2
-//dZ/dQ1a = -(Q1y*s^Q1a*ln(s)) / (1 / R1 + Q1y * s^Q1a) ^ 2
-//dZ/dR2 = 1 / ((R2 + 1 / (W*sqrt(s))) ^ 2 * (1 / (R2 + 1 / (W*sqrt(s))) + Q2y * s^Q2a) ^ 2)
-//dZ/dW = -1 / (W ^ 2 * (R2 + 1 / (W*sqrt(s))) ^ 2 * sqrt(s)*(1 / (R2 + 1 / (W*sqrt(s))) + Q2y * s^Q2a) ^ 2)
-//dZ/dQ2y = -s ^ Q2a / (1 / (R2 + 1 / (W*sqrt(s))) + Q2y * s^Q2a) ^ 2
-//dZ/dQ2a = -(Q2y*s^Q2a*ln(s)) / (1 / (R2 + 1 / (W*sqrt(s))) + Q2y * s^Q2a) ^ 2
+// dZ/dLs = s
+// dZ/dRs = 1
+// dZ/dR1 = 1 / (R1 ^ 2 * (1 / R1 + Q1y * s^Q1a) ^ 2)
+// dZ/dQ1y = -s ^ Q1a / (1 / R1 + Q1y * s^Q1a) ^ 2
+// dZ/dQ1a = -(Q1y*s^Q1a*ln(s)) / (1 / R1 + Q1y * s^Q1a) ^ 2
+// dZ/dR2 = 1 / ((R2 + 1 / (W*sqrt(s))) ^ 2 * (1 / (R2 + 1 / (W*sqrt(s))) + Q2y * s^Q2a) ^ 2)
+// dZ/dW = -1 / (W ^ 2 * (R2 + 1 / (W*sqrt(s))) ^ 2 * sqrt(s)*(1 / (R2 + 1 / (W*sqrt(s))) + Q2y * s^Q2a) ^ 2)
+// dZ/dQ2y = -s ^ Q2a / (1 / (R2 + 1 / (W*sqrt(s))) + Q2y * s^Q2a) ^ 2
+// dZ/dQ2a = -(Q2y*s^Q2a*ln(s)) / (1 / (R2 + 1 / (W*sqrt(s))) + Q2y * s^Q2a) ^ 2
 
 double custom3_p[9] = {
     1E-5,    1,    1,   0.1,    0.9,    0.1,    1,  2,  0.65 
@@ -933,6 +933,185 @@ void custom3Prime(double *p, double *jac, int m, int n, void *data)
 }
 
 #pragma endregion
+
+#pragma region Define Simplified Battery Full Cell, Ls-Rs-(Rctc-Cdc)|Cdlc-(Rcta-Rda|Cda)|Cdla
+
+// Model Expression = Ls-Rs-(Rctc-Cdc)|Cdlc-(Rcta-Rda|Cda)|Cdla
+// Z = Rs + Ls*s + 1/(1/(Rctc + 1/(Cdc*s)) + Cdlc*s) + 1/(Cdla*s + 1/(Rcta + 1/(1/Rda + Cda*s)))
+// Parameters = { Ls, Rs, Rctc, Cdc, Cdlc, Rcta, Rda, Cda, Cdla }
+// dZ/dLs 	 = s
+// dZ/dRs 	 = 1
+// dZ/dRctc  = 1/((Rctc + 1/(Cdc*s))^2*(1/(Rctc + 1/(Cdc*s)) + Cdlc*s)^2)
+// dZ/dCdc 	 = -1/(Cdc^2*(Rctc + 1/(Cdc*s))^2*s*(1/(Rctc + 1/(Cdc*s)) + Cdlc*s)^2)
+// dZ/dCdlc  = -s/(1/(Rctc + 1/(Cdc*s)) + Cdlc*s)^2
+// dZ/dRcta  = 1/((Rcta + 1/(1/Rda + Cda*s))^2*(Cdla*s + 1/(Rcta + 1/(1/Rda + Cda*s)))^2)
+// dZ/dRda 	 = 1/(Rda^2*(1/Rda + Cda*s)^2*(Rcta + 1/(1/Rda + Cda*s))^2*(Cdla*s + 1/(Rcta + 1/(1/Rda + Cda*s)))^2)
+// dZ/dCda 	 = -s/((1/Rda + Cda*s)^2*(Rcta + 1/(1/Rda + Cda*s))^2*(Cdla*s + 1/(Rcta + 1/(1/Rda + Cda*s)))^2)
+// dZ/dCdla  = -s/(Cdla*s + 1/(Rcta + 1/(1/Rda + Cda*s)))^2
+
+double batteryFullCell_p[9] = {
+    2.0E-6,    0.005,    0.0001,   3500.0,    700.0,    0.0005,    0.001,  50.0,  15
+}; // best parameters
+double batteryFullCell_z1[101] = {
+    5.000225000000E-3,	5.000284000000E-3,	5.000357000000E-3,	5.000450000000E-3,	5.000566000000E-3,
+    5.000712000000E-3,	5.000896000000E-3,	5.001127000000E-3,	5.001417000000E-3,	5.001782000000E-3,
+    5.002239000000E-3,	5.002813000000E-3,	5.003533000000E-3,	5.004434000000E-3,	5.005560000000E-3,
+    5.006965000000E-3,	5.008714000000E-3,	5.010886000000E-3,	5.013573000000E-3,	5.016883000000E-3,
+    5.020940000000E-3,	5.025879000000E-3,	5.031849000000E-3,	5.038995000000E-3,	5.047456000000E-3,
+    5.057345000000E-3,	5.068733000000E-3,	5.081628000000E-3,	5.095961000000E-3,	5.111579000000E-3,
+    5.128249000000E-3,	5.145687000000E-3,	5.163585000000E-3,	5.181664000000E-3,	5.199716000000E-3,
+    5.217643000000E-3,	5.235480000000E-3,	5.253404000000E-3,	5.271732000000E-3,	5.290910000000E-3,
+    5.311498000000E-3,	5.334149000000E-3,	5.359590000000E-3,	5.388593000000E-3,	5.421938000000E-3,
+    5.460360000000E-3,	5.504479000000E-3,	5.554715000000E-3,	5.611191000000E-3,	5.673642000000E-3,
+    5.741360000000E-3,	5.813173000000E-3,	5.887515000000E-3,	5.962546000000E-3,	6.036339000000E-3,
+    6.107082000000E-3,	6.173250000000E-3,	6.233721000000E-3,	6.287826000000E-3,	6.335322000000E-3,
+    6.376324000000E-3,	6.411209000000E-3,	6.440526000000E-3,	6.464908000000E-3,	6.485011000000E-3,
+    6.501468000000E-3,	6.514862000000E-3,	6.525710000000E-3,	6.534463000000E-3,	6.541503000000E-3,
+    6.547151000000E-3,	6.551673000000E-3,	6.555288000000E-3,	6.558175000000E-3,	6.560477000000E-3,
+    6.562311000000E-3,	6.563772000000E-3,	6.564934000000E-3,	6.565859000000E-3,	6.566595000000E-3,
+    6.567180000000E-3,	6.567645000000E-3,	6.568015000000E-3,	6.568309000000E-3,	6.568542000000E-3,
+    6.568728000000E-3,	6.568875000000E-3,	6.568992000000E-3,	6.569085000000E-3,	6.569159000000E-3,
+    6.569218000000E-3,	6.569264000000E-3,	6.569301000000E-3,	6.569331000000E-3,	6.569354000000E-3,
+    6.569373000000E-3,	6.569387000000E-3,	6.569399000000E-3,	6.569408000000E-3,	6.569416000000E-3,
+    6.569422000000E-3
+}; // real part of the observed data
+double batteryFullCell_z2[101] = {
+    1.255554000000E-2,	1.118764000000E-2,	9.968192000000E-3,	8.881018000000E-3,	7.911692000000E-3,
+    7.047352000000E-3,	6.276530000000E-3,	5.588998000000E-3,	4.975637000000E-3,	4.428310000000E-3,
+    3.939758000000E-3,	3.503506000000E-3,	3.113771000000E-3,	2.765395000000E-3,	2.453770000000E-3,
+    2.174784000000E-3,	1.924767000000E-3,	1.700441000000E-3,	1.498889000000E-3,	1.317513000000E-3,
+    1.154011000000E-3,	1.006348000000E-3,	8.727398000000E-4,	7.516356000000E-4,	6.416996000000E-4,
+    5.417957000000E-4,	4.509657000000E-4,	3.684020000000E-4,	2.934119000000E-4,	2.253754000000E-4,
+    1.636992000000E-4,	1.077741000000E-4,	5.694327000000E-5,	1.048776000000E-5,	-3.236824000000E-5,
+    -7.243524000000E-5,	-1.105251000000E-4,	-1.474141000000E-4,	-1.838073000000E-4,	-2.203083000000E-4,
+    -2.573918000000E-4,	-2.953803000000E-4,	-3.344187000000E-4,	-3.744485000000E-4,	-4.151816000000E-4,
+    -4.560765000000E-4,	-4.963262000000E-4,	-5.348678000000E-4,	-5.704240000000E-4,	-6.015886000000E-4,
+    -6.269547000000E-4,	-6.452754000000E-4,	-6.556318000000E-4,	-6.575720000000E-4,	-6.511879000000E-4,
+    -6.371090000000E-4,	-6.164147000000E-4,	-5.904899000000E-4,	-5.608594000000E-4,	-5.290350000000E-4,
+    -4.963985000000E-4,	-4.641314000000E-4,	-4.331860000000E-4,	-4.042898000000E-4,	-3.779697000000E-4,
+    -3.545881000000E-4,	-3.343795000000E-4,	-3.174868000000E-4,	-3.039920000000E-4,	-2.939417000000E-4,
+    -2.873675000000E-4,	-2.843019000000E-4,	-2.847908000000E-4,	-2.889032000000E-4,	-2.967382000000E-4,
+    -3.084318000000E-4,	-3.241619000000E-4,	-3.441536000000E-4,	-3.686836000000E-4,	-3.980858000000E-4,
+    -4.327561000000E-4,	-4.731587000000E-4,	-5.198327000000E-4,	-5.733995000000E-4,	-6.345713000000E-4,
+    -7.041610000000E-4,	-7.830926000000E-4,	-8.724142000000E-4,	-9.733112000000E-4,	-1.087123000000E-3,
+    -1.215360000000E-3,	-1.359723000000E-3,	-1.522129000000E-3,	-1.704732000000E-3,	-1.909956000000E-3,
+    -2.140524000000E-3,	-2.399496000000E-3,	-2.690307000000E-3,	-3.016817000000E-3,	-3.383358000000E-3,
+    -3.794794000000E-3
+}; // imaginary part of the observed data
+double batteryFullCell_f[101] = {
+    1.000000000000E+3,	8.912509000000E+2,	7.943282000000E+2,	7.079458000000E+2,	6.309573000000E+2,
+    5.623413000000E+2,	5.011872000000E+2,	4.466836000000E+2,	3.981072000000E+2,	3.548134000000E+2,
+    3.162278000000E+2,	2.818383000000E+2,	2.511886000000E+2,	2.238721000000E+2,	1.995262000000E+2,
+    1.778279000000E+2,	1.584893000000E+2,	1.412538000000E+2,	1.258925000000E+2,	1.122018000000E+2,
+    1.000000000000E+2,	8.912509000000E+1,	7.943282000000E+1,	7.079458000000E+1,	6.309573000000E+1,
+    5.623413000000E+1,	5.011872000000E+1,	4.466836000000E+1,	3.981072000000E+1,	3.548134000000E+1,
+    3.162278000000E+1,	2.818383000000E+1,	2.511886000000E+1,	2.238721000000E+1,	1.995262000000E+1,
+    1.778279000000E+1,	1.584893000000E+1,	1.412538000000E+1,	1.258925000000E+1,	1.122018000000E+1,
+    1.000000000000E+1,	8.912509000000E+0,	7.943282000000E+0,	7.079458000000E+0,	6.309573000000E+0,
+    5.623413000000E+0,	5.011872000000E+0,	4.466836000000E+0,	3.981072000000E+0,	3.548134000000E+0,
+    3.162278000000E+0,	2.818383000000E+0,	2.511886000000E+0,	2.238721000000E+0,	1.995262000000E+0,
+    1.778279000000E+0,	1.584893000000E+0,	1.412538000000E+0,	1.258925000000E+0,	1.122018000000E+0,
+    1.000000000000E+0,	8.912509000000E-1,	7.943282000000E-1,	7.079458000000E-1,	6.309573000000E-1,
+    5.623413000000E-1,	5.011872000000E-1,	4.466836000000E-1,	3.981072000000E-1,	3.548134000000E-1,
+    3.162278000000E-1,	2.818383000000E-1,	2.511886000000E-1,	2.238721000000E-1,	1.995262000000E-1,
+    1.778279000000E-1,	1.584893000000E-1,	1.412538000000E-1,	1.258925000000E-1,	1.122018000000E-1,
+    1.000000000000E-1,	8.912509000000E-2,	7.943282000000E-2,	7.079458000000E-2,	6.309573000000E-2,
+    5.623413000000E-2,	5.011872000000E-2,	4.466836000000E-2,	3.981072000000E-2,	3.548134000000E-2,
+    3.162278000000E-2,	2.818383000000E-2,	2.511886000000E-2,	2.238721000000E-2,	1.995262000000E-2,
+    1.778279000000E-2,	1.584893000000E-2,	1.412538000000E-2,	1.258925000000E-2,	1.122018000000E-2,
+    1.000000000000E-2
+}; // frequency data
+void batteryFullCell(double *p, double *y, int m, int n, void *data)
+{
+    // PREMISS: the 1st half of y is real part and the other is imaginary part of the observed data
+    //          y = { z1[0], z1[1], ..., z1[n/2 - 1], z2[0], z2[1], ..., z2[n/2 - 1] }
+
+    register int i;
+    int Ns = (int)(n / 2);
+
+    double Ls = p[0];
+    double Rs = p[1];
+    double Rctc = p[2];
+    double Cdc = p[3];
+    double Cdlc = p[4];
+    double Rcta = p[5];
+    double Rda = p[6];
+    double Cda = p[7];
+    double Cdla = p[8];
+
+    double f;
+    complex <double> s;
+    complex <double> z;
+
+    double *ff = (double*)data;
+    for (i = 0; i < Ns; ++i, ff++)
+    {
+        f = *ff;
+        s = { 0.0, TwoPi * f }; // s = j * w, where angular frequency w = 2 * pi * f
+        z = Rs + Ls * s + 1.0 / (1.0 / (Rctc + 1.0 / (Cdc*s)) + Cdlc * s) + 1.0 / (Cdla*s + 1.0 / (Rcta + 1.0 / (1.0 / Rda + Cda * s)));
+
+        y[i] = real(z);
+        y[Ns + i] = imag(z);
+    }
+}
+void batteryFullCellPrime(double *p, double *jac, int m, int n, void *data)
+{
+    register int i;
+    int Ns = (int)(n / 2);
+
+    double Ls = p[0];
+    double Rs = p[1];
+    double Rctc = p[2];
+    double Cdc = p[3];
+    double Cdlc = p[4];
+    double Rcta = p[5];
+    double Rda = p[6];
+    double Cda = p[7];
+    double Cdla = p[8];
+
+    double f;
+    complex <double> s;
+    complex <double> jac0, jac1, jac2, jac3, jac4, jac5, jac6, jac7, jac8, jac9;
+
+    double *ff = (double*)data;
+    for (i = 0; i < Ns; ++i, ff++)
+    {
+        f = *ff;
+        s = { 0.0, TwoPi * f }; // s = j * w, where angular frequency w = 2 * pi * f
+
+        jac0 = s;
+        jac1 = 1.0;
+        jac2 = 1.0 / (pow(Rctc + 1.0 / (Cdc*s), 2) * pow(1.0 / (Rctc + 1.0 / (Cdc * s)) + Cdlc * s, 2));
+        jac3 = -1.0 / (pow(Cdc, 2) * pow(Rctc + 1.0 / (Cdc * s), 2) * s * pow(1.0 / (Rctc + 1.0 / (Cdc * s)) + Cdlc * s, 2));
+        jac4 = -s / pow(1.0 / (Rctc + 1.0 / (Cdc * s)) + Cdlc * s, 2);
+        jac5 = 1.0 / (pow(Rcta + 1.0 / (1.0 / Rda + Cda * s), 2) * pow(Cdla * s + 1.0 / (Rcta + 1.0 / (1.0 / Rda + Cda * s)), 2));
+        jac6 = 1.0 / (pow(Rda, 2) * pow(1.0 / Rda + Cda * s, 2) * pow(Rcta + 1.0 / (1.0 / Rda + Cda * s), 2) * pow(Cdla * s + 1.0 / (Rcta + 1.0 / (1.0 / Rda + Cda * s)), 2));
+        jac7 = -s / (pow(1.0 / Rda + Cda * s, 2) * pow(Rcta + 1.0 / (1.0 / Rda + Cda * s), 2) * pow(Cdla * s + 1.0 / (Rcta + 1.0 / (1.0 / Rda + Cda * s)), 2));
+        jac8 = -s / pow(Cdla * s + 1.0 / (Rcta + 1.0 / (1.0 / Rda + Cda * s)), 2);
+
+        jac[m*i] = real(jac0);
+        jac[m*i + 1] = real(jac1);
+        jac[m*i + 2] = real(jac2);
+        jac[m*i + 3] = real(jac3);
+        jac[m*i + 4] = real(jac4);
+        jac[m*i + 5] = real(jac5);
+        jac[m*i + 6] = real(jac6);
+        jac[m*i + 7] = real(jac7);
+        jac[m*i + 8] = real(jac8);
+        jac[m*(Ns + i)] = imag(jac0);
+        jac[m*(Ns + i) + 1] = imag(jac1);
+        jac[m*(Ns + i) + 2] = imag(jac2);
+        jac[m*(Ns + i) + 3] = imag(jac3);
+        jac[m*(Ns + i) + 4] = imag(jac4);
+        jac[m*(Ns + i) + 5] = imag(jac5);
+        jac[m*(Ns + i) + 6] = imag(jac6);
+        jac[m*(Ns + i) + 7] = imag(jac7);
+        jac[m*(Ns + i) + 8] = imag(jac8);
+    }
+}
+
+#pragma endregion
+
 
 #pragma region Private Methods
 
@@ -1180,6 +1359,39 @@ int main()
 
     strcpy_s(functionName, 69, "Ls-Rs-R1|Q1-(R2-W)|Q2 - with finite difference approximated Jacobian");
     printOutput(functionName, ret, info, m, p, custom3_p);
+
+    //
+    // 10. Simplified battery full cell, Ls-Rs-(Rctc-Cdc)|Cdlc-(Rcta-Rda|Cda)|Cdla - Complex non-linear Regression
+    //
+
+    m = 9; n = 101;
+
+    double batteryFullCell_y[202];
+    memcpy(batteryFullCell_y, batteryFullCell_z1, n * sizeof(double));
+    memcpy(&batteryFullCell_y[n], batteryFullCell_z2, n * sizeof(double));
+
+    lb[0] = 1e-10; lb[1] = 1e-10; lb[2] = 1e-10; lb[3] = 1e-10; lb[4] = 1e-10; // set lower bound
+    lb[5] = 1e-10; lb[6] = 1e-10; lb[7] = 1e-10; lb[8] = 1e-10;
+
+    //
+    // 10.1 analytic Jacobian
+    //
+    p[0] = 2.1e-6; p[1] = 0.0055; p[2] = 0.00011; p[3] = 3550; p[4] = 750;
+    p[5] = 0.00055; p[6] = 0.0011; p[7] = 54.0; p[8] = 17.0; // initial values 
+    ret = dlevmar_bc_der(batteryFullCell, batteryFullCellPrime, p, batteryFullCell_y, m, 2 * n, lb, NULL, NULL, maxiteration, opts, info, NULL, NULL, batteryFullCell_f);
+
+    strcpy_s(functionName, 54, "Simplified battery full cell - with analytic Jacobian");
+    printOutput(functionName, ret, info, m, p, batteryFullCell_p);
+
+    //
+    // 9.2 finite difference approximated Jacobian
+    //
+    p[0] = 2.1e-6; p[1] = 0.0055; p[2] = 0.00011; p[3] = 3550; p[4] = 750;
+    p[5] = 0.00055; p[6] = 0.0011; p[7] = 54.0; p[8] = 17.0; // initial values  
+    ret = dlevmar_bc_dif(batteryFullCell, p, batteryFullCell_y, m, 2 * n, lb, NULL, NULL, maxiteration, opts, info, NULL, NULL, batteryFullCell_f);
+
+    strcpy_s(functionName, 76, "Simplified battery full cell - with finite difference approximated Jacobian");
+    printOutput(functionName, ret, info, m, p, batteryFullCell_p);
     
 	return 0;
 }
