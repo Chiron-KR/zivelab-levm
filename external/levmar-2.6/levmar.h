@@ -59,7 +59,7 @@
 
 
 #ifdef __cplusplus
-extern "C" { 
+extern "C" {
 #endif
 
 /* work arrays size for ?levmar_der and ?levmar_dif functions.
