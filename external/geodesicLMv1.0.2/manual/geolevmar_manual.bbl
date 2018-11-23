@@ -1,0 +1,26 @@
+\begin{thebibliography}{1}
+
+\bibitem{transtrum2012improvements}
+Mark~K Transtrum and James~P Sethna.
+\newblock Improvements to the levenberg-marquardt algorithm for nonlinear
+  least-squares minimization.
+\newblock {\em arXiv preprint arXiv:1201.5885}, 2012.
+
+\bibitem{transtrum2012geodesic}
+Mark~K Transtrum and James~P Sethna.
+\newblock Geodesic acceleration and the small-curvature approximation for
+  nonlinear least squares.
+\newblock {\em arXiv preprint arXiv:1207.4999}, 2012.
+
+\bibitem{PRE83}
+Mark~K. Transtrum, Benjamin~B. Machta, and James~P. Sethna.
+\newblock Geometry of nonlinear least squares with applications to sloppy
+  models and optimization.
+\newblock {\em Phys. Rev. E}, 83:036701, Mar 2011.
+
+\bibitem{PRL104}
+Mark~K. Transtrum, Benjamin~B. Machta, and James~P. Sethna.
+\newblock Why are nonlinear fits to data so challenging?
+\newblock {\em Phys. Rev. Lett.}, 104:060201, Feb 2010.
+
+\end{thebibliography}
