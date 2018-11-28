@@ -25,14 +25,15 @@ void rosenbrock(double *p, double *x, int m, int n, void *data)
 {
 	register int i;
 
-    for (i = 0; i < n; ++i)
+    for (i = 0; i < n; i++)
         x[i] = ((1.0 - p[0]) * (1.0 - p[0]) + ROSD * (p[1] - p[0] * p[0]) * (p[1] - p[0] * p[0]));
 }
 void rosenbrockPrime(double *p, double *jac, int m, int n, void *data)
 {
 	register int i, j;
 
-    for (i = j = 0; i < n; ++i) {
+    for (i = j = 0; i < n; i++)
+    {
         jac[j++] = (-2 + 2 * p[0] - 4 * ROSD * (p[1] - p[0] * p[0]) * p[0]);
         jac[j++] = (2 * ROSD * (p[1] - p[0] * p[0]));
     }
@@ -60,14 +61,22 @@ double norris_x[36] = {
 void norris(double *p, double *y, int m, int n, void *data)
 {
 	register int i;
-	for (i = 0; i < n; ++i)
-		y[i] = p[0] + p[1] * norris_x[i];
+    double x;
+    double *xx = (double*)data;
+    for (i = 0; i < n; i++, xx++)
+    {
+        x = *xx;
+        y[i] = p[0] + p[1] * norris_x[i];
+    }
 }
 void norrisPrime(double *p, double *jac, int m, int n, void *data)
 {
 	register int i, j;
-
-	for (i = j = 0; i < n; ++i) {
+    double x;
+    double *xx = (double*)data;
+	for (i = j = 0; i < n; i++, xx++)
+    {
+        x = *xx;
 		jac[j++] = 1.0;
 		jac[j++] = norris_x[i];
 	}
@@ -101,7 +110,7 @@ void lanczos1(double *p, double *y, int m, int n, void *data)
 
     double x;
     double *xx = (double*)data;    
-	for (i = 0; i < n; ++i, xx++)
+	for (i = 0; i < n; i++, xx++)
 	{
 		x = *xx;
 		y[i] = p[0] * exp(-p[1] * x) + p[2] * exp(-p[3] * x) + p[4] * exp(-p[5] * x);
@@ -144,7 +153,7 @@ void thurber(double *p, double *y, int m, int n, void *data)
 
     double x;
 	double *xx = (double*)data;
-	for (i = 0; i < n; ++i, xx++)
+	for (i = 0; i < n; i++, xx++)
 	{
 		x = *xx;
 		y[i] = (p[0] + p[1] * x + p[2] * x*x + p[3] * x*x*x) / (1 + p[4] * x + p[5] * x*x + p[6] * x*x*x);
@@ -174,7 +183,7 @@ void rat43(double *p, double *y, int m, int n, void *data)
 
     double x;
     double *xx = (double*)data;
-    for (i = 0; i < n; ++i, xx++)
+    for (i = 0; i < n; i++, xx++)
     {
         x = *xx;
         y[i] = p[0] / pow(1.0 + exp(p[1] - p[2] * x), 1.0 / p[3]);
@@ -329,7 +338,7 @@ void randle(double *p, double *y, int m, int n, void *data)
     complex <double> z;
 
     double *ff = (double*)data; 
-    for (i = 0; i < Ns; ++i, ff++)
+    for (i = 0; i < Ns; i++, ff++)
     {
         f = *ff;
         s = { 0.0, TwoPi * f }; // s = j * w, where angular frequency w = 2 * pi * f
@@ -354,7 +363,7 @@ void randlePrime(double *p, double *jac, int m, int n, void *data)
     complex <double> jac0, jac1, jac2;
 
     double *ff = (double*)data;
-    for (i = 0; i < Ns; ++i, ff++)
+    for (i = 0; i < Ns; i++, ff++)
     {
         f = *ff;
         s = { 0.0, TwoPi * f }; // s = j * w, where angular frequency w = 2 * pi * f
@@ -524,7 +533,7 @@ void custom1(double *p, double *y, int m, int n, void *data)
     complex <double> s, cm, z;
 
     double *ff = (double*)data;
-    for (i = 0; i < Ns; ++i, ff++)
+    for (i = 0; i < Ns; i++, ff++)
     {
         f = *ff;
         s = { 0.0, TwoPi * f }; // s = j * w, where angular frequency w = 2 * pi * f
@@ -551,7 +560,7 @@ void custom1Prime(double *p, double *jac, int m, int n, void *data)
     complex <double> jac0, jac1, jac2, jac3, jac4;
 
     double *ff = (double*)data;
-    for (i = 0; i < Ns; ++i, ff++)
+    for (i = 0; i < Ns; i++, ff++)
     {
         f = *ff;
         s = { 0.0, TwoPi * f }; // s = j * w, where angular frequency w = 2 * pi * f
@@ -671,7 +680,7 @@ void custom2(double *p, double *y, int m, int n, void *data)
     complex <double> oneOverSqrtj2Pi(OneOverTwoSqrtPi, -OneOverTwoSqrtPi); // 1/sqrt(2 pi j)
 
     double *ff = (double*)data;
-    for (i = 0; i < Ns; ++i, ff++)
+    for (i = 0; i < Ns; i++, ff++)
     {
         f = *ff;
         s = { 0.0, TwoPi * f }; // s = j * w, where angular frequency w = 2 * pi * f
@@ -702,7 +711,7 @@ void custom2Prime(double *p, double *jac, int m, int n, void *data)
     complex <double> oneOverSqrtj2Pi(OneOverTwoSqrtPi, -OneOverTwoSqrtPi); // 1/sqrt(2 pi j)
 
     double *ff = (double*)data;
-    for (i = 0; i < Ns; ++i, ff++)
+    for (i = 0; i < Ns; i++, ff++)
     {
         f = *ff;
         s = { 0.0, TwoPi * f }; // s = j * w, where angular frequency w = 2 * pi * f
@@ -866,7 +875,7 @@ void custom3(double *p, double *y, int m, int n, void *data)
     complex <double> z;
 
     double *ff = (double*)data;
-    for (i = 0; i < Ns; ++i, ff++)
+    for (i = 0; i < Ns; i++, ff++)
     {
         double f = *ff;
         s = { 0.0, TwoPi * f }; // s = j * w, where angular frequency w = 2 * pi * f
@@ -896,7 +905,7 @@ void custom3Prime(double *p, double *jac, int m, int n, void *data)
     complex <double> jac0, jac1, jac2, jac3, jac4, jac5, jac6, jac7, jac8, jac9;
 
     double *ff = (double*)data;
-    for (i = 0; i < Ns; ++i, ff++)
+    for (i = 0; i < Ns; i++, ff++)
     {
         f = *ff;
         s = { 0.0, TwoPi * f }; // s = j * w, where angular frequency w = 2 * pi * f
@@ -1044,7 +1053,7 @@ void batteryFullCell(double *p, double *y, int m, int n, void *data)
     complex <double> z;
 
     double *ff = (double*)data;
-    for (i = 0; i < Ns; ++i, ff++)
+    for (i = 0; i < Ns; i++, ff++)
     {
         f = *ff;
         s = { 0.0, TwoPi * f }; // s = j * w, where angular frequency w = 2 * pi * f
@@ -1074,7 +1083,7 @@ void batteryFullCellPrime(double *p, double *jac, int m, int n, void *data)
     complex <double> jac0, jac1, jac2, jac3, jac4, jac5, jac6, jac7, jac8, jac9;
 
     double *ff = (double*)data;
-    for (i = 0; i < Ns; ++i, ff++)
+    for (i = 0; i < Ns; i++, ff++)
     {
         f = *ff;
         s = { 0.0, TwoPi * f }; // s = j * w, where angular frequency w = 2 * pi * f
@@ -1121,13 +1130,13 @@ void printOutput(char* function, int ret, double* info, int m, double* pSolution
 
     printf("Results for %s\n", function);
     printf("Levenberg-Marquardt returned %d in %g iter, reason %g\nSolution: ", ret, info[5], info[6]);
-    for (i = 0; i < m; ++i)
+    for (i = 0; i < m; i++)
         printf("%12.7g ", pSolution[i]);
     printf("\nExpected: ");
-    for (i = 0; i < m; ++i)
+    for (i = 0; i < m; i++)
         printf("%12.7g ", pExpected[i]);
     printf("\n\nMinimization info:\n");
-    for (i = 0; i < LM_INFO_SZ; ++i)
+    for (i = 0; i < LM_INFO_SZ; i++)
         printf("%g ", info[i]);
 
     printf("\n");
@@ -1173,7 +1182,7 @@ int main()
     for (i = 0; i < n; i++) x[i] = 0.0;
 
     //
-    // 6.1 analytic Jacobian
+    // 1.1 analytic Jacobian
     //
     p[0] = -1.2; p[1] = 1.0;
     ret = dlevmar_der(rosenbrock, rosenbrockPrime, p, x, m, n, 10 * maxiteration, opts, info, NULL, NULL, NULL);
@@ -1181,7 +1190,7 @@ int main()
     printOutput(functionName, ret, info, m, p, rosenbrock_p);
 
     //
-    // 6.2 finite difference approximated Jacobian
+    // 1.2 finite difference approximated Jacobian
     //
     p[0] = 0.8; p[1] = 0.64;
     ret = dlevmar_dif(rosenbrock, p, x, m, n, 10 * maxiteration, opts, info, NULL, NULL, NULL);
@@ -1196,7 +1205,7 @@ int main()
 	m = 2; n = 36;
 	p[0] = 1.0; p[1] = 1.0;
 	
-	ret = dlevmar_der(norris, norrisPrime, p, norris_y, m, n, maxiteration, opts, info, NULL, NULL, NULL);
+	ret = dlevmar_der(norris, norrisPrime, p, norris_y, m, n, maxiteration, opts, info, NULL, NULL, norris_x);
 
     strcpy_s(functionName, 32, "Norris - with analytic jacobian");
     printOutput(functionName, ret, info, m, p, norris_p);
