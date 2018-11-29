@@ -852,7 +852,9 @@ namespace Levm.GeodesicLM
                             : Math.Min(accepted - 1, -1);
                         break;
                     case 4:
-                        accepted = (beta * beta * Cnew <= C) ? Math.Max(accepted + 1, 1) : Math.Min(accepted - 1, -1);
+                        accepted = (beta * beta * Cnew <= C)
+                            ? Math.Max(accepted + 1, 1)
+                            : Math.Min(accepted - 1, -1);
                         break;
                 }
             }
@@ -1065,7 +1067,7 @@ namespace Levm.GeodesicLM
 
             for (i = 1; i <= n; i++)
             {
-                jtilde.SetColumn(i - 1, fjac.Row(i - 1) / Math.Sqrt(dtd[i - 1, i - 1])); // This assumes that dtd is diagonal...
+                jtilde.SetColumn(i - 1, fjac.Column(i - 1) / Math.Sqrt(dtd[i - 1, i - 1])); // This assumes that dtd is diagonal...
             }
             gradCtilde = fvec * jtilde;
             g = jtilde.Transpose() * jtilde;
@@ -1218,6 +1220,8 @@ namespace Levm.GeodesicLM
                 case -2: return "maxfev exceeded";
                 case -3: return "maxjev exceeded";
                 case -4: return "maxaev exceeded";
+                case -5: return "maxlam exceeded";
+                case -6: return "cost is not decreasing";
                 case -10: return "User Termination";
                 case -11: return "NaN Produced";
             }
@@ -1628,7 +1632,7 @@ namespace Levm.GeodesicLM
                     break;
                 }
                 // Update Functions
-                //
+                
                 // Full or partial Jacobian Update?
                 if (accepted > 0 && ibroyden <= 0) jac_force_update = true;
                 if (accepted + ibroyden <= 0 && !jac_uptodate) jac_force_update = true; // Force jac update after too many failed attempts
@@ -1870,9 +1874,9 @@ namespace Levm.GeodesicLM
                 }
                 else if (print_level == 5)
                 {
-                    Console.WriteLine(string.Format("[{0}] nfev = {1}, njev = {2}, naev = {3}, accepted = {4}", istep, nfev, njev, naev, accepted));
+                    //Console.WriteLine(string.Format("[{0}] nfev = {1}, njev = {2}, naev = {3}, accepted = {4}", istep, nfev, njev, naev, accepted));
                     Console.WriteLine(string.Format("  Cost = {0}, lam = {1}, delta = {2}", C, lam, delta));
-                    Console.WriteLine(string.Format("  av = {0}, cos alpha = {1}", av, cos_alpha));
+                    //Console.WriteLine(string.Format("  av = {0}, cos alpha = {1}", av, cos_alpha));
                     Console.WriteLine(string.Format("  x = {0}\t {1}", x[0], x[1]));
                     //       WRITE(print_unit, *) "  v = ", v
                     //       WRITE(print_unit, *) "  a = ", a
