@@ -271,8 +271,8 @@ namespace Levm.GeodesicLM.Test
             ibold = 0; // can be 0, 1, 2, 3, 4 
             ibroyden = 0; // 0 or 1
             initialfactor = 0.001; // initial lamda
-            factoraccept = 2.5; // 2.5 for standard LM
-            factorreject = 10; // 10 for standard LM
+            factoraccept = 5; // 2.5 for standard LM
+            factorreject = 2; // 10 for standard LM
             avmax = 0.75;
 
             GeoDesicLM.geodesiclm(norris, norrisPrime, null,
