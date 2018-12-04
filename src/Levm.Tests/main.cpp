@@ -1124,17 +1124,34 @@ void batteryFullCellPrime(double *p, double *jac, int m, int n, void *data)
 
 #pragma region Private Methods
 
-void printOutput(char* function, int ret, double* info, int m, double* pSolution, double* pExpected)
+void printOutput(char* function, int ret, double* info, int m, double* pSolution, double* pExpected, double* cov)
 {
+    char code[7][200] =
+    {
+        "stopped by small gradient J^T e",
+        "stopped by small Dp",
+        "stopped by itmax",
+        "singular matrix.Restart from current p with increased mu",
+        "no further error reduction is possible.Restart with increased mu",
+        "stopped by small ||e||_2",
+        "stopped by invalid(i.e.NaN or Inf) func values. This is a user error"
+    };
+
     register int i;
 
     printf("Results for %s\n", function);
-    printf("Levenberg-Marquardt returned %d in %g iter, reason %g\nSolution: ", ret, info[5], info[6]);
-    for (i = 0; i < m; i++)
-        printf("%12.7g ", pSolution[i]);
-    printf("\nExpected: ");
+    printf("Levenberg-Marquardt returned %d in %g iter, reason %g: %s\nExpected: ", ret, info[5], info[6], code[(int)info[6] - 1]);
     for (i = 0; i < m; i++)
         printf("%12.7g ", pExpected[i]);
+    printf("\nSolution: ");
+    for (i = 0; i < m; i++)
+        printf("%12.7g ", pSolution[i]);
+    if (cov)
+    {
+        printf("\nStd.Dev.: ");
+        for (i = 0; i < m; i++)
+            printf("%12.7g ", sqrt(cov[i * m + i]));
+    }
     printf("\n\nMinimization info:\n");
     for (i = 0; i < LM_INFO_SZ; i++)
         printf("%g ", info[i]);
@@ -1158,7 +1175,8 @@ int main()
 
 	double p[40]; // initial parameter estimates
     double lb[40]; // lower bound of parameters
-    //double ub[40]; // upper bound of parameters
+    double ub[40]; // upper bound of parameters
+    double dscl[40]; // scaling factor
     double x[40]; // measurement vector
     
 	double opts[LM_OPTS_SZ];
@@ -1171,6 +1189,8 @@ int main()
 	double info[LM_INFO_SZ]; // information regarding the minimization
 
     int maxiteration = 1000; // max iteration
+
+    double cov[40 * 40]; // covariance matrix
 
     char functionName[200] = "Rosenberg - with analytic jacobian";
 
@@ -1185,18 +1205,18 @@ int main()
     // 1.1 analytic Jacobian
     //
     p[0] = -1.2; p[1] = 1.0;
-    ret = dlevmar_der(rosenbrock, rosenbrockPrime, p, x, m, n, 10 * maxiteration, opts, info, NULL, NULL, NULL);
+    ret = dlevmar_der(rosenbrock, rosenbrockPrime, p, x, m, n, 10 * maxiteration, opts, info, NULL, cov, NULL);
 
-    printOutput(functionName, ret, info, m, p, rosenbrock_p);
+    printOutput(functionName, ret, info, m, p, rosenbrock_p, cov);
 
     //
     // 1.2 finite difference approximated Jacobian
     //
     p[0] = 0.8; p[1] = 0.64;
-    ret = dlevmar_dif(rosenbrock, p, x, m, n, 10 * maxiteration, opts, info, NULL, NULL, NULL);
+    ret = dlevmar_dif(rosenbrock, p, x, m, n, 10 * maxiteration, opts, info, NULL, cov, NULL);
 
     strcpy_s(functionName, 57, "Rosenberg - with finite difference approximated Jacobian");
-    printOutput(functionName, ret, info, m, p, rosenbrock_p);
+    printOutput(functionName, ret, info, m, p, rosenbrock_p, cov);
     
     //
 	// 2. Norris - Linear Regression
@@ -1205,10 +1225,10 @@ int main()
 	m = 2; n = 36;
 	p[0] = 1.0; p[1] = 1.0;
 	
-	ret = dlevmar_der(norris, norrisPrime, p, norris_y, m, n, maxiteration, opts, info, NULL, NULL, norris_x);
+	ret = dlevmar_der(norris, norrisPrime, p, norris_y, m, n, maxiteration, opts, info, NULL, cov, norris_x);
 
     strcpy_s(functionName, 32, "Norris - with analytic jacobian");
-    printOutput(functionName, ret, info, m, p, norris_p);
+    printOutput(functionName, ret, info, m, p, norris_p, cov);
 
 	//
     // 3. Lanczos1 - Non-linear Regression
@@ -1217,10 +1237,10 @@ int main()
 	m = 6; n = 24;
 	p[0] = 1.2; p[1] = 0.3; p[2] = 5.6; p[3] = 5.5; p[4] = 6.5; p[5] = 7.6; // initail values
 
-	ret = dlevmar_dif(lanczos1, p, lanczos1_y, m, n, maxiteration, opts, info, NULL, NULL, lanczos1_x);
+	ret = dlevmar_dif(lanczos1, p, lanczos1_y, m, n, maxiteration, opts, info, NULL, cov, lanczos1_x);
 
     strcpy_s(functionName, 56, "Lanczos1 - with finite difference approximated Jacobian");
-    printOutput(functionName, ret, info, m, p, lanczos1_p);
+    printOutput(functionName, ret, info, m, p, lanczos1_p, cov);
     
     //
 	// 4. Thurber - Non-linear Regression
@@ -1229,10 +1249,10 @@ int main()
 	m = 7; n = 37;
 	p[0] = 1000; p[1] = 1000; p[2] = 400; p[3] = 40; p[4] = 0.7; p[5] = 0.3; p[6] = 0.03;
 
-	ret = dlevmar_dif(thurber, p, thurber_y, m, n, maxiteration, opts, info, NULL, NULL, thurber_x);
+	ret = dlevmar_dif(thurber, p, thurber_y, m, n, maxiteration, opts, info, NULL, cov, thurber_x);
 
     strcpy_s(functionName, 55, "Thurber - with finite difference approximated Jacobian");
-    printOutput(functionName, ret, info, m, p, thurber_p);
+    printOutput(functionName, ret, info, m, p, thurber_p, cov);
     
     //
     // 5. Rat43 - Non-linear Regression
@@ -1241,10 +1261,10 @@ int main()
     m = 4; n = 15;
     p[0] = 100; p[1] = 10; p[2] = 1; p[3] = 1; // initial values
         
-    ret = dlevmar_dif(rat43, p, rat43_y, m, n, maxiteration, opts, info, NULL, NULL, rat43_x);
+    ret = dlevmar_dif(rat43, p, rat43_y, m, n, maxiteration, opts, info, NULL, cov, rat43_x);
 
     strcpy_s(functionName, 53, "Rat43 - with finite difference approximated Jacobian");
-    printOutput(functionName, ret, info, m, p, rat43_p);
+    printOutput(functionName, ret, info, m, p, rat43_p, cov);
 
     //
     // 6. Randle - Complex non-linear Regression
@@ -1262,19 +1282,19 @@ int main()
     // 6.1 analytic Jacobian
     //
     p[0] = 10.0; p[1] = 10.0; p[2] = 1e-6; // initial values   
-    ret = dlevmar_bc_der(randle, randlePrime, p, randle_y, m, 2 * n, lb, NULL, NULL, maxiteration, opts, info, NULL, NULL, randle_f);
+    ret = dlevmar_bc_der(randle, randlePrime, p, randle_y, m, 2 * n, lb, NULL, NULL, maxiteration, opts, info, NULL, cov, randle_f);
 
     strcpy_s(functionName, 32, "Randle - with analytic Jacobian");
-    printOutput(functionName, ret, info, m, p, randle_p);
+    printOutput(functionName, ret, info, m, p, randle_p, cov);
 
     //
     // 6.2 finite difference approximated Jacobian
     //
     p[0] = 10.0; p[1] = 10.0; p[2] = 1.0e-6; // initial values 
-    ret = dlevmar_bc_dif(randle, p, randle_y, m, 2 * n, lb, NULL, NULL, maxiteration, opts, info, NULL, NULL, randle_f);
+    ret = dlevmar_bc_dif(randle, p, randle_y, m, 2 * n, lb, NULL, NULL, maxiteration, opts, info, NULL, cov, randle_f);
 
     strcpy_s(functionName, 54, "Randle - with finite difference approximated Jacobian");
-    printOutput(functionName, ret, info, m, p, randle_p);
+    printOutput(functionName, ret, info, m, p, randle_p, cov);
 
     //
     // 7. Custom1, L-Rs-Rp|Q - Complex non-linear Regression
@@ -1292,19 +1312,19 @@ int main()
     // 7.1 analytic Jacobian
     //
     p[0] = 1e-6; p[1] = 0.181; p[2] = 7.981; p[3] = 0.032; p[4] = 0.666; // initial values  
-    ret = dlevmar_bc_der(custom1, custom1Prime, p, custom1_y, m, 2 * n, lb, NULL, NULL, maxiteration, opts, info, NULL, NULL, custom1_f);
+    ret = dlevmar_bc_der(custom1, custom1Prime, p, custom1_y, m, 2 * n, lb, NULL, NULL, maxiteration, opts, info, NULL, cov, custom1_f);
 
     strcpy_s(functionName, 35, "L-Rs-Rp|Q - with analytic Jacobian");
-    printOutput(functionName, ret, info, m, p, custom1_p);
+    printOutput(functionName, ret, info, m, p, custom1_p, cov);
     
     //
     // 7.2 finite difference approximated Jacobian
     //
     p[0] = 1e-6; p[1] = 0.181; p[2] = 7.981; p[3] = 0.032; p[4] = 0.666; // initial values   
-    ret = dlevmar_bc_dif(custom1, p, custom1_y, m, 2 * n, lb, NULL, NULL, maxiteration, opts, info, NULL, NULL, custom1_f);
+    ret = dlevmar_bc_dif(custom1, p, custom1_y, m, 2 * n, lb, NULL, NULL, maxiteration, opts, info, NULL, cov, custom1_f);
 
     strcpy_s(functionName, 57, "L-Rs-Rp|Q - with finite difference approximated Jacobian");
-    printOutput(functionName, ret, info, m, p, custom1_p);
+    printOutput(functionName, ret, info, m, p, custom1_p, cov);
 
     //
     // 8. Custom2, L-Rs-Rp|Q-W - Complex non-linear Regression
@@ -1322,19 +1342,19 @@ int main()
     // 8.1 analytic Jacobian
     //
     p[0] = 2e-3; p[1] = 0.08; p[2] = 0.210; p[3] = 2.272; p[4] = 0.7; p[5] = 1.4; // initial values 
-    ret = dlevmar_bc_der(custom2, custom2Prime, p, custom2_y, m, 2 * n, lb, NULL, NULL, maxiteration, opts, info, NULL, NULL, custom2_f);
+    ret = dlevmar_bc_der(custom2, custom2Prime, p, custom2_y, m, 2 * n, lb, NULL, NULL, maxiteration, opts, info, NULL, cov, custom2_f);
 
     strcpy_s(functionName, 37, "L-Rs-Rp|Q-W - with analytic Jacobian");
-    printOutput(functionName, ret, info, m, p, custom2_p);
+    printOutput(functionName, ret, info, m, p, custom2_p, cov);
 
     //
     // 8.2 finite difference approximated Jacobian
     //
     p[0] = 2e-3; p[1] = 0.08; p[2] = 0.210; p[3] = 2.272; p[4] = 0.7; p[5] = 1.4; // initial values
-    ret = dlevmar_bc_dif(custom2, p, custom2_y, m, 2 * n, lb, NULL, NULL, maxiteration, opts, info, NULL, NULL, custom2_f);
+    ret = dlevmar_bc_dif(custom2, p, custom2_y, m, 2 * n, lb, NULL, NULL, maxiteration, opts, info, NULL, cov, custom2_f);
 
     strcpy_s(functionName, 59, "L-Rs-Rp|Q-W - with finite difference approximated Jacobian");
-    printOutput(functionName, ret, info, m, p, custom2_p);
+    printOutput(functionName, ret, info, m, p, custom2_p, cov);
 
     //
     // 9. Custom3, Ls-Rs-R1|Q1-(R2-W)|Q2 - Complex non-linear Regression
@@ -1354,20 +1374,20 @@ int main()
     //
     p[0] = 2e-5; p[1] = 1.1; p[2] = 0.9; p[3] = 0.09; p[4] = 0.88;
     p[5] = 0.2; p[6] = 1.2; p[7] = 2.1; p[8] = 0.6; // initial values 
-    ret = dlevmar_bc_der(custom3, custom3Prime, p, custom3_y, m, 2 * n, lb, NULL, NULL, maxiteration, opts, info, NULL, NULL, custom3_f);
+    ret = dlevmar_bc_der(custom3, custom3Prime, p, custom3_y, m, 2 * n, lb, NULL, NULL, maxiteration, opts, info, NULL, cov, custom3_f);
 
     strcpy_s(functionName, 47, "Ls-Rs-R1|Q1-(R2-W)|Q2 - with analytic Jacobian");
-    printOutput(functionName, ret, info, m, p, custom3_p);
+    printOutput(functionName, ret, info, m, p, custom3_p, cov);
 
     //
     // 9.2 finite difference approximated Jacobian
     //
     p[0] = 2e-5; p[1] = 1.1; p[2] = 0.9; p[3] = 0.09; p[4] = 0.88;
     p[5] = 0.2; p[6] = 1.2; p[7] = 2.1; p[8] = 0.6; // initial values 
-    ret = dlevmar_bc_dif(custom3, p, custom3_y, m, 2 * n, lb, NULL, NULL, maxiteration, opts, info, NULL, NULL, custom3_f);
+    ret = dlevmar_bc_dif(custom3, p, custom3_y, m, 2 * n, lb, NULL, NULL, maxiteration, opts, info, NULL, cov, custom3_f);
 
     strcpy_s(functionName, 69, "Ls-Rs-R1|Q1-(R2-W)|Q2 - with finite difference approximated Jacobian");
-    printOutput(functionName, ret, info, m, p, custom3_p);
+    printOutput(functionName, ret, info, m, p, custom3_p, cov);
 
     //
     // 10. Simplified battery full cell, Ls-Rs-(Rctc-Cdc)|Cdlc-(Rcta-Rda|Cda)|Cdla - Complex non-linear Regression
@@ -1382,25 +1402,50 @@ int main()
     lb[0] = 1e-10; lb[1] = 1e-10; lb[2] = 1e-10; lb[3] = 1e-10; lb[4] = 1e-10; // set lower bound
     lb[5] = 1e-10; lb[6] = 1e-10; lb[7] = 1e-10; lb[8] = 1e-10;
 
+    dscl[0] = 1e-6; dscl[1] = 0.001; dscl[2] = 0.001; dscl[3] = 1000; dscl[4] = 100; // set scaling factor
+    dscl[5] = 0.001; dscl[6] = 0.001; dscl[7] = 10; dscl[8] = 1;
+
     //
     // 10.1 analytic Jacobian
     //
     p[0] = 2.1e-6; p[1] = 0.0055; p[2] = 0.00011; p[3] = 3550; p[4] = 750;
-    p[5] = 0.00055; p[6] = 0.0011; p[7] = 54.0; p[8] = 17.0; // initial values 
-    ret = dlevmar_bc_der(batteryFullCell, batteryFullCellPrime, p, batteryFullCell_y, m, 2 * n, lb, NULL, NULL, maxiteration, opts, info, NULL, NULL, batteryFullCell_f);
+    p[5] = 0.00055; p[6] = 0.0011; p[7] = 54.0; p[8] = 17.0; // initial values
+
+    ret = dlevmar_bc_der(batteryFullCell, batteryFullCellPrime, p, batteryFullCell_y, m, 2 * n, lb, NULL, NULL, maxiteration, opts, info, NULL, cov, batteryFullCell_f);
 
     strcpy_s(functionName, 54, "Simplified battery full cell - with analytic Jacobian");
-    printOutput(functionName, ret, info, m, p, batteryFullCell_p);
+    printOutput(functionName, ret, info, m, p, batteryFullCell_p, cov);
 
     //
-    // 9.2 finite difference approximated Jacobian
+    // 10.2 analytic Jacobian, scaled
+    //
+    p[0] = 2.1e-6; p[1] = 0.0055; p[2] = 0.00011; p[3] = 3550; p[4] = 750;
+    p[5] = 0.00055; p[6] = 0.0011; p[7] = 54.0; p[8] = 17.0; // initial values
+
+    ret = dlevmar_bc_der(batteryFullCell, batteryFullCellPrime, p, batteryFullCell_y, m, 2 * n, lb, NULL, dscl, maxiteration, opts, info, NULL, cov, batteryFullCell_f);
+
+    strcpy_s(functionName, 62, "Simplified battery full cell - with analytic Jacobian, scaled");
+    printOutput(functionName, ret, info, m, p, batteryFullCell_p, cov);
+
+    //
+    // 9.3 finite difference approximated Jacobian
     //
     p[0] = 2.1e-6; p[1] = 0.0055; p[2] = 0.00011; p[3] = 3550; p[4] = 750;
     p[5] = 0.00055; p[6] = 0.0011; p[7] = 54.0; p[8] = 17.0; // initial values  
-    ret = dlevmar_bc_dif(batteryFullCell, p, batteryFullCell_y, m, 2 * n, lb, NULL, NULL, maxiteration, opts, info, NULL, NULL, batteryFullCell_f);
+    ret = dlevmar_bc_dif(batteryFullCell, p, batteryFullCell_y, m, 2 * n, lb, NULL, NULL, maxiteration, opts, info, NULL, cov, batteryFullCell_f);
 
     strcpy_s(functionName, 76, "Simplified battery full cell - with finite difference approximated Jacobian");
-    printOutput(functionName, ret, info, m, p, batteryFullCell_p);
+    printOutput(functionName, ret, info, m, p, batteryFullCell_p, cov);
+
+    //
+    // 9.4 finite difference approximated Jacobian, scaled
+    //
+    p[0] = 2.1e-6; p[1] = 0.0055; p[2] = 0.00011; p[3] = 3550; p[4] = 750;
+    p[5] = 0.00055; p[6] = 0.0011; p[7] = 54.0; p[8] = 17.0; // initial values  
+    ret = dlevmar_bc_dif(batteryFullCell, p, batteryFullCell_y, m, 2 * n, lb, NULL, dscl, 100 * maxiteration, opts, info, NULL, cov, batteryFullCell_f);
+
+    strcpy_s(functionName, 84, "Simplified battery full cell - with finite difference approximated Jacobian, scaled");
+    printOutput(functionName, ret, info, m, p, batteryFullCell_p, cov);
     
 	return 0;
 }
