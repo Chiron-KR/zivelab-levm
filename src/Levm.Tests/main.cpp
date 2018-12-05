@@ -1030,6 +1030,7 @@ double batteryFullCell_f[101] = {
     1.778279000000E-2,	1.584893000000E-2,	1.412538000000E-2,	1.258925000000E-2,	1.122018000000E-2,
     1.000000000000E-2
 }; // frequency data
+double batteryFullCell_w[202];
 void batteryFullCell(double *p, double *y, int m, int n, void *data)
 {
     // PREMISS: the 1st half of y is real part and the other is imaginary part of the observed data
@@ -1059,8 +1060,8 @@ void batteryFullCell(double *p, double *y, int m, int n, void *data)
         s = { 0.0, TwoPi * f }; // s = j * w, where angular frequency w = 2 * pi * f
         z = Rs + Ls * s + 1.0 / (1.0 / (Rctc + 1.0 / (Cdc*s)) + Cdlc * s) + 1.0 / (Cdla*s + 1.0 / (Rcta + 1.0 / (1.0 / Rda + Cda * s)));
 
-        y[i] = real(z);
-        y[Ns + i] = imag(z);
+        y[i] = batteryFullCell_w[i] * real(z);
+        y[Ns + i] = batteryFullCell_w[Ns + i] * imag(z);
     }
 }
 void batteryFullCellPrime(double *p, double *jac, int m, int n, void *data)
@@ -1098,24 +1099,24 @@ void batteryFullCellPrime(double *p, double *jac, int m, int n, void *data)
         jac7 = -s / (pow(1.0 / Rda + Cda * s, 2) * pow(Rcta + 1.0 / (1.0 / Rda + Cda * s), 2) * pow(Cdla * s + 1.0 / (Rcta + 1.0 / (1.0 / Rda + Cda * s)), 2));
         jac8 = -s / pow(Cdla * s + 1.0 / (Rcta + 1.0 / (1.0 / Rda + Cda * s)), 2);
 
-        jac[m*i] = real(jac0);
-        jac[m*i + 1] = real(jac1);
-        jac[m*i + 2] = real(jac2);
-        jac[m*i + 3] = real(jac3);
-        jac[m*i + 4] = real(jac4);
-        jac[m*i + 5] = real(jac5);
-        jac[m*i + 6] = real(jac6);
-        jac[m*i + 7] = real(jac7);
-        jac[m*i + 8] = real(jac8);
-        jac[m*(Ns + i)] = imag(jac0);
-        jac[m*(Ns + i) + 1] = imag(jac1);
-        jac[m*(Ns + i) + 2] = imag(jac2);
-        jac[m*(Ns + i) + 3] = imag(jac3);
-        jac[m*(Ns + i) + 4] = imag(jac4);
-        jac[m*(Ns + i) + 5] = imag(jac5);
-        jac[m*(Ns + i) + 6] = imag(jac6);
-        jac[m*(Ns + i) + 7] = imag(jac7);
-        jac[m*(Ns + i) + 8] = imag(jac8);
+        jac[m*i] = batteryFullCell_w[i] * real(jac0);
+        jac[m*i + 1] = batteryFullCell_w[i] * real(jac1);
+        jac[m*i + 2] = batteryFullCell_w[i] * real(jac2);
+        jac[m*i + 3] = batteryFullCell_w[i] * real(jac3);
+        jac[m*i + 4] = batteryFullCell_w[i] * real(jac4);
+        jac[m*i + 5] = batteryFullCell_w[i] * real(jac5);
+        jac[m*i + 6] = batteryFullCell_w[i] * real(jac6);
+        jac[m*i + 7] = batteryFullCell_w[i] * real(jac7);
+        jac[m*i + 8] = batteryFullCell_w[i] * real(jac8);
+        jac[m*(Ns + i)] = batteryFullCell_w[Ns + i] * imag(jac0);
+        jac[m*(Ns + i) + 1] = batteryFullCell_w[Ns + i] * imag(jac1);
+        jac[m*(Ns + i) + 2] = batteryFullCell_w[Ns + i] * imag(jac2);
+        jac[m*(Ns + i) + 3] = batteryFullCell_w[Ns + i] * imag(jac3);
+        jac[m*(Ns + i) + 4] = batteryFullCell_w[Ns + i] * imag(jac4);
+        jac[m*(Ns + i) + 5] = batteryFullCell_w[Ns + i] * imag(jac5);
+        jac[m*(Ns + i) + 6] = batteryFullCell_w[Ns + i] * imag(jac6);
+        jac[m*(Ns + i) + 7] = batteryFullCell_w[Ns + i] * imag(jac7);
+        jac[m*(Ns + i) + 8] = batteryFullCell_w[Ns + i] * imag(jac8);
     }
 }
 
@@ -1405,46 +1406,105 @@ int main()
     dscl[0] = 1e-6; dscl[1] = 0.001; dscl[2] = 0.001; dscl[3] = 1000; dscl[4] = 100; // set scaling factor
     dscl[5] = 0.001; dscl[6] = 0.001; dscl[7] = 10; dscl[8] = 1;
 
-    //
-    // 10.1 analytic Jacobian
-    //
-    p[0] = 2.1e-6; p[1] = 0.0055; p[2] = 0.00011; p[3] = 3550; p[4] = 750;
-    p[5] = 0.00055; p[6] = 0.0011; p[7] = 54.0; p[8] = 17.0; // initial values
+    for (i = 0; i < 2 * n; i++)
+    {
+        batteryFullCell_w[i] = 1.0;
+    }
 
-    ret = dlevmar_bc_der(batteryFullCell, batteryFullCellPrime, p, batteryFullCell_y, m, 2 * n, lb, NULL, NULL, maxiteration, opts, info, NULL, cov, batteryFullCell_f);
-
-    strcpy_s(functionName, 54, "Simplified battery full cell - with analytic Jacobian");
-    printOutput(functionName, ret, info, m, p, batteryFullCell_p, cov);
-
-    //
-    // 10.2 analytic Jacobian, scaled
-    //
-    p[0] = 2.1e-6; p[1] = 0.0055; p[2] = 0.00011; p[3] = 3550; p[4] = 750;
-    p[5] = 0.00055; p[6] = 0.0011; p[7] = 54.0; p[8] = 17.0; // initial values
-
-    ret = dlevmar_bc_der(batteryFullCell, batteryFullCellPrime, p, batteryFullCell_y, m, 2 * n, lb, NULL, dscl, maxiteration, opts, info, NULL, cov, batteryFullCell_f);
-
-    strcpy_s(functionName, 62, "Simplified battery full cell - with analytic Jacobian, scaled");
-    printOutput(functionName, ret, info, m, p, batteryFullCell_p, cov);
+    double weightedY[202];
+    for (i = 0; i < 2 * n; i++)
+    {
+        weightedY[i] = batteryFullCell_w[i] * batteryFullCell_y[i];
+    }
 
     //
-    // 10.3 finite difference approximated Jacobian
+    // 10.1 finite difference approximated Jacobian
     //
     p[0] = 2.1e-6; p[1] = 0.0055; p[2] = 0.00011; p[3] = 3550; p[4] = 750;
     p[5] = 0.00055; p[6] = 0.0011; p[7] = 54.0; p[8] = 17.0; // initial values  
-    ret = dlevmar_bc_dif(batteryFullCell, p, batteryFullCell_y, m, 2 * n, lb, NULL, NULL, maxiteration, opts, info, NULL, cov, batteryFullCell_f);
+    ret = dlevmar_bc_dif(batteryFullCell, p, weightedY, m, 2 * n, lb, NULL, NULL, maxiteration, opts, info, NULL, cov, batteryFullCell_f);
 
     strcpy_s(functionName, 76, "Simplified battery full cell - with finite difference approximated Jacobian");
     printOutput(functionName, ret, info, m, p, batteryFullCell_p, cov);
 
     //
-    // 10.4 finite difference approximated Jacobian, scaled
+    // 10.2 finite difference approximated Jacobian, scaled
+    //
+    //p[0] = 2.1e-6; p[1] = 0.0055; p[2] = 0.00011; p[3] = 3550; p[4] = 750;
+    //p[5] = 0.00055; p[6] = 0.0011; p[7] = 54.0; p[8] = 17.0; // initial values  
+    //ret = dlevmar_bc_dif(batteryFullCell, p, batteryFullCell_y, m, 2 * n, lb, NULL, dscl, 100 * maxiteration, opts, info, NULL, cov, batteryFullCell_f);
+
+    //strcpy_s(functionName, 84, "Simplified battery full cell - with finite difference approximated Jacobian, scaled");
+    //printOutput(functionName, ret, info, m, p, batteryFullCell_p, cov);
+
+    //
+    // 10.3 analytic Jacobian
     //
     p[0] = 2.1e-6; p[1] = 0.0055; p[2] = 0.00011; p[3] = 3550; p[4] = 750;
-    p[5] = 0.00055; p[6] = 0.0011; p[7] = 54.0; p[8] = 17.0; // initial values  
-    ret = dlevmar_bc_dif(batteryFullCell, p, batteryFullCell_y, m, 2 * n, lb, NULL, dscl, 100 * maxiteration, opts, info, NULL, cov, batteryFullCell_f);
+    p[5] = 0.00055; p[6] = 0.0011; p[7] = 54.0; p[8] = 17.0; // initial values
 
-    strcpy_s(functionName, 84, "Simplified battery full cell - with finite difference approximated Jacobian, scaled");
+    ret = dlevmar_bc_der(batteryFullCell, batteryFullCellPrime, p, weightedY, m, 2 * n, lb, NULL, NULL, maxiteration, opts, info, NULL, cov, batteryFullCell_f);
+
+    strcpy_s(functionName, 54, "Simplified battery full cell - with analytic Jacobian");
+    printOutput(functionName, ret, info, m, p, batteryFullCell_p, cov);
+
+    //
+    // 10.4 analytic Jacobian, scaled, Unity weighting
+    //
+    p[0] = 2.1e-6; p[1] = 0.0055; p[2] = 0.00011; p[3] = 3550; p[4] = 750;
+    p[5] = 0.00055; p[6] = 0.0011; p[7] = 54.0; p[8] = 17.0; // initial values
+
+    ret = dlevmar_bc_der(batteryFullCell, batteryFullCellPrime, p, weightedY, m, 2 * n, lb, NULL, dscl, maxiteration, opts, info, NULL, cov, batteryFullCell_f);
+
+    strcpy_s(functionName, 67, "Simplified battery full cell - with analytic Jacobian, scaled, UWT");
+    printOutput(functionName, ret, info, m, p, batteryFullCell_p, cov);
+
+    //
+    // 10.5 analytic Jacobian, scaled, Proportinal weighting
+    //
+    for (i = 0; i < n; i++)
+    {
+        batteryFullCell_w[i] = abs(batteryFullCell_z1[i]);
+        batteryFullCell_w[n + i] = abs(batteryFullCell_z2[i]);
+    }
+
+    for (i = 0; i < n; i++)
+    {
+        weightedY[i] = batteryFullCell_w[i] * batteryFullCell_y[i];
+        weightedY[n + i] = batteryFullCell_w[n + i] * batteryFullCell_y[n + i];
+    }
+
+    p[0] = 2.1e-6; p[1] = 0.0055; p[2] = 0.00011; p[3] = 3550; p[4] = 750;
+    p[5] = 0.00055; p[6] = 0.0011; p[7] = 54.0; p[8] = 17.0; // initial values
+
+    ret = dlevmar_bc_der(batteryFullCell, batteryFullCellPrime, p, weightedY, m, 2 * n, lb, NULL, dscl, maxiteration, opts, info, NULL, cov, batteryFullCell_f);
+
+    strcpy_s(functionName, 67, "Simplified battery full cell - with analytic Jacobian, scaled, PWT");
+    printOutput(functionName, ret, info, m, p, batteryFullCell_p, cov);
+
+    //
+    // 10.6 analytic Jacobian, scaled, Modulus weighting
+    //
+    for (i = 0; i < n; i++)
+    {
+        double w = batteryFullCell_z1[i] * batteryFullCell_z1[i] + batteryFullCell_z2[i] * batteryFullCell_z2[i];
+        w = sqrt(w);
+        batteryFullCell_w[i] = w;
+        batteryFullCell_w[n + i] = w;
+    }
+
+    for (i = 0; i < n; i++)
+    {
+        weightedY[i] = batteryFullCell_w[i] * batteryFullCell_y[i];
+        weightedY[n + i] = batteryFullCell_w[n + i] * batteryFullCell_y[n + i];
+    }
+
+    p[0] = 2.1e-6; p[1] = 0.0055; p[2] = 0.00011; p[3] = 3550; p[4] = 750;
+    p[5] = 0.00055; p[6] = 0.0011; p[7] = 54.0; p[8] = 17.0; // initial values
+
+    ret = dlevmar_bc_der(batteryFullCell, batteryFullCellPrime, p, weightedY, m, 2 * n, lb, NULL, dscl, maxiteration, opts, info, NULL, cov, batteryFullCell_f);
+
+    strcpy_s(functionName, 67, "Simplified battery full cell - with analytic Jacobian, scaled, MWT");
     printOutput(functionName, ret, info, m, p, batteryFullCell_p, cov);
     
 	return 0;
