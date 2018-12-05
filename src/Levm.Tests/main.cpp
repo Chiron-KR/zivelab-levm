@@ -1428,7 +1428,7 @@ int main()
     printOutput(functionName, ret, info, m, p, batteryFullCell_p, cov);
 
     //
-    // 9.3 finite difference approximated Jacobian
+    // 10.3 finite difference approximated Jacobian
     //
     p[0] = 2.1e-6; p[1] = 0.0055; p[2] = 0.00011; p[3] = 3550; p[4] = 750;
     p[5] = 0.00055; p[6] = 0.0011; p[7] = 54.0; p[8] = 17.0; // initial values  
@@ -1438,7 +1438,7 @@ int main()
     printOutput(functionName, ret, info, m, p, batteryFullCell_p, cov);
 
     //
-    // 9.4 finite difference approximated Jacobian, scaled
+    // 10.4 finite difference approximated Jacobian, scaled
     //
     p[0] = 2.1e-6; p[1] = 0.0055; p[2] = 0.00011; p[3] = 3550; p[4] = 750;
     p[5] = 0.00055; p[6] = 0.0011; p[7] = 54.0; p[8] = 17.0; // initial values  
